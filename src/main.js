@@ -2,7 +2,7 @@ const fs = require(`fs`);
 const fetch = require(`node-fetch`);
 const https = require('https')
 
-// No logins are included as of now, due to me not understanding them.
+// No logins are included as of now, due to me not understanding them and lacking general knowledge of how to obtain the necessary tokens.
 
 let key;
 
