@@ -11,7 +11,7 @@
     "keywords": [
         "modio",
         "nodejs",
-        "librrary"
+        "library"
     ],
     "author": "fheahdythdr",
     "license": "MIT",
@@ -20,7 +20,8 @@
     },
     "homepage": "https://github.com/fheahdythdr/modio-js/",
     "dependencies": {
-        "whatwg-url": "^5.0.0"
+        "whatwg-url": "^5.0.0",
+        "node-fetch": "2.6.9"
     },
     "devDependencies": {
     },
