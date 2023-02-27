@@ -1,5 +1,5 @@
 const fs = require(`fs`);
-const fetch = require(`../../node_modules/node-fetch`);
+const fetch = require(`node-fetch`);
 const https = require('https')
 
 // No logins are included as of now, due to me not understanding them.
