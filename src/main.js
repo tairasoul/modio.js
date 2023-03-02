@@ -17,6 +17,13 @@ let defaultHeaders = {
 
 // The OAuth and API key functions can probably still be improved.
 
+/**
+ * Start using API key.
+ * @return void
+ * 
+ * Throws an error if the API key hasn't been set.
+ */
+
 function useAPIKey() {
     if (key) {
         defaultHeaders = {
@@ -28,6 +35,13 @@ function useAPIKey() {
         throw new Error("API key hasn't been set.")
     }
 }
+
+/**
+ * Start using OAuth key.
+ * @return void
+ * 
+ * Throws an error if the Oauth key hasn't been set.
+ */
 
 function useOAuthkey() {
     if (oauthkey) {
@@ -42,11 +56,27 @@ function useOAuthkey() {
     }
 }
 
+/**
+ * Set API key.
+ * @param apikey The api key to use.
+ * @return void
+ * 
+ * Sets the API key, and starts using it. (calls the useAPIKey() function)
+ */
+
 function setAPIKey(apikey) {
     key = apikey
     isUsingAPIKey = true;
     useAPIKey();
 }
+
+/**
+ * Set OAuth key.
+ * @param apikey The OAuth key to use.
+ * @return void
+ * 
+ * Sets the OAuth key, and starts using it. (calls the useOAuthkey() function)
+ */
 
 function setOAuthKey(oauth) {
     oauthkey = oauth
@@ -54,8 +84,24 @@ function setOAuthKey(oauth) {
     useOAuthkey();
 }
 
+/**
+ * Returns true if OAuth is currently being used, else returns false.
+ * @returns boolean
+ */
+
 function usingOAuth() {
-    return (isUsingOAuth ? isUsingAPIKey : true, false)
+    if (isUsingOAuth) return true
+    else return false;
+}
+
+/**
+ * Checks if a key has been set.
+ * @returns boolean
+ */
+
+function hasKey() {
+    if (isUsingOAuth || isUsingAPIKey) return true
+    else return false;
 }
 
 /**
@@ -263,5 +309,6 @@ module.exports = {
     setOAuthKey,
     usingOAuth,
     useAPIKey,
-    useOAuthkey
+    useOAuthkey,
+    hasKey
 }
