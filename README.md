@@ -1,7 +1,7 @@
 # modio.js
 
 This is currently a very unfinished library.
-Docs are very basic, and most API features you'll get using libraries for other languages (python, cli) are not here.
+Docs are still very basic, and most API features you'll get using libraries for other languages (python, cli) are not here.
 Made this because there were no other libraries for using the mod.io API for nodejs, and I decided to publish it because other people might be looking for a module to use mod.io API too.
 
 ## Examples
