@@ -30,6 +30,7 @@ function useAPIKey() {
             'Accept': 'application/json'
         }
         if (isUsingOAuth) isUsingOAuth = false;
+        isUsingAPIKey = true;
     }
     else {
         throw new Error("API key hasn't been set.")
@@ -50,6 +51,7 @@ function useOAuthkey() {
             'Authentication': 'Bearer ' + oauthkey
         }
         if (isUsingAPIKey) isUsingAPIKey = false;
+        isUsingOAuth = true;
     }
     else {
         throw new Error("OAuth key hasn't been set.")
@@ -66,7 +68,6 @@ function useOAuthkey() {
 
 function setAPIKey(apikey) {
     key = apikey
-    isUsingAPIKey = true;
     useAPIKey();
 }
 
@@ -80,7 +81,6 @@ function setAPIKey(apikey) {
 
 function setOAuthKey(oauth) {
     oauthkey = oauth
-    isUsingOAuth = true;
     useOAuthkey();
 }
 
