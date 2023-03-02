@@ -25,7 +25,7 @@ function useAPIKey() {
         if (isUsingOAuth) isUsingOAuth = false;
     }
     else {
-        throw new Error('API key hasn\'t been set.')
+        throw new Error("API key hasn't been set.")
     }
 }
 
@@ -38,7 +38,7 @@ function useOAuthkey() {
         if (isUsingAPIKey) isUsingAPIKey = false;
     }
     else {
-        throw new Error('OAuth key hasn\'t been set.')
+        throw new Error("OAuth key hasn't been set.")
     }
 }
 
