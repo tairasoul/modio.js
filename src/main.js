@@ -48,7 +48,7 @@ function useOAuthkey() {
     if (oauthkey) {
         defaultHeaders = {
             'Accept': 'application/json',
-            'Authentication': 'Bearer ' + oauthkey
+            'Authorization': 'Bearer ' + oauthkey
         }
         if (isUsingAPIKey) isUsingAPIKey = false;
         isUsingOAuth = true;
