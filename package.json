@@ -1,6 +1,6 @@
 {
     "name": "modio.js",
-    "version": "1.0.2",
+    "version": "1.0.4a",
     "description": "A nodejs library to interact with mod.io API. Very unfinished.",
     "main": "src/main.js",
     "engines": {
