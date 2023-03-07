@@ -1,0 +1,4 @@
+add a data structure thingy that makes it easier to sort through responses
+add proper authentication support for other methods
+add different mod functions
+pretty much add everything other tools or apis have
