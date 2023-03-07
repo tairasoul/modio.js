@@ -86,7 +86,7 @@ function setOAuthKey(oauth) {
 
 /**
  * Returns true if OAuth is currently being used, else returns false.
- * @returns boolean
+ * @return boolean
  */
 
 function usingOAuth() {
@@ -96,7 +96,7 @@ function usingOAuth() {
 
 /**
  * Checks if a key has been set.
- * @returns boolean
+ * @return boolean
  */
 
 function hasKey() {
@@ -125,8 +125,8 @@ function getGames() {
 
 /**
  * Gets a specific game.
- * @param id ID of the game.
- * @returns Promise
+ * @param {string} id ID of the game.
+ * @return Promise
  * 
  * Returns an object, containing multiple properties, including the game ID, status and others.
  * You can see an example of it here: https://docs.mod.io/?javascript--nodejs#game-object
@@ -142,8 +142,8 @@ function getGame(id) {
 
 /**
  * Gets all the mods a game has.
- * @param gameid ID of the game to get mods from.
- * @returns Promise
+ * @param {string} gameid ID of the game to get mods from.
+ * @return Promise
  * 
  * Contains an object, containing an array called data.
  * This array contains multiple objects representing each mod.
@@ -160,9 +160,9 @@ function getMods(gameid) {
 
 /**
  * Gets a mod from a specific game.
- * @param gameid The gameID to get the mod from.
- * @param modid The ID of the mod to get.
- * @returns Promise
+ * @param {string} gameid The gameID to get the mod from.
+ * @param {string} modid The ID of the mod to get.
+ * @return Promise
  * Contains an object which contains a lot of properties.
  * You can see an example here: https://docs.mod.io/?javascript--nodejs#mod-object
  */
@@ -175,13 +175,55 @@ function getMod(gameid, modid) {
     })
 }
 
+/**
+ * Subscribe to a mod. Needs OAuth key.
+ * @param {string} gameid The game the mod is for.
+ * @param {string} modid The mod you want to subscribe to.
+ * @return Promise
+ * 
+ * Subscribes to a mod.
+ */
+
+function subscribeTo(gameid, modid) {
+    if (!isUsingOAuth) throw new Error('susbcribeTo requires an OAuth key to function.')
+    return fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${oauthkey}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+        }
+    })
+}
+
+/**
+ * Unsubscribe from a mod. Needs OAuth key.
+ * @param {string} gameid The game the mod is for.
+ * @param {string} modid The mod you want to unsubscribe from.
+ * @return Promise
+ * 
+ * Unsubscribes from a mod.
+ */
+
+function unsubscribeFrom(gameid, modid) {
+    if (!isUsingOAuth) throw new Error('unsubscribeFrom requires an OAuth key to function.')
+    return fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${oauthkey}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+        }
+    })
+}
+
 // This only contains basic mod functions, no uploading, adding, editing or deleting yet.
 
 /**
  * Gets the files of a specific mod.
- * @param gameid Game to get files from.
- * @param modid Mod to get files from.
- * @returns Promise
+ * @param {string} gameid Game to get files from.
+ * @param {string} modid Mod to get files from.
+ * @return Promise
  * Contains an object with an array.
  * View example here: https://docs.mod.io/?javascript--nodejs#get-modfiles-2
  */
@@ -196,10 +238,10 @@ function getModfiles(gameid, modid) {
 
 /**
  * Gets a specific modfile.
- * @param gameid Game to get mod from.
- * @param modid Mod to get file from.
- * @param platform Platform to get file for..
- * @returns Promise
+ * @param {string} gameid Game to get mod from.
+ * @param {string} modid Mod to get file from.
+ * @param {string} platform Platform to get file for.
+ * @return Promise
  * Contains an object.
  * View example here: https://docs.mod.io/?javascript--nodejs#modfile-object
  * 
@@ -222,23 +264,26 @@ function getModfiles(gameid, modid) {
 
 /**
  * Downloads a mod.
- * @param gameid Game to download mod from.
- * @param modid Mod to download file from.
- * @param platform Platform to get file for.
- * @param outputpath Where to put the file.
- * @returns Promise
+ * @param {string} gameid Game to download mod from.
+ * @param {string} modid Mod to download file from.
+ * @param {string} platform Platform to get file for.
+ * @param {string} outputpath Where to put the file.
+ * @param {boolean} useNameID To use the name ID in the link. This is to prevent mods with files that have the same names from overwriting eachother.
+ * @return Promise
  * 
  * Downloads a mod from the website.
  */
 
- async function downloadMod(gameid, modid, platform, outputpath) {
+ async function downloadMod(gameid, modid, platform, outputpath, useNameID) {
     // This was supposed to send a request to v1/games/{gameid}/mods/{modid}/files/{fileid} to get a specific file from the mod, but I don't know where to get the fileid from while minimizing requests.
     const data = await getModfile(gameid, modid, platform);
+    let name;
+    if (useNameID) name = (await (await getMod(gameid, modid)).json()).name_id + '.zip';
     if (!data || !data.download) return;
     const download = data.download.binary_url;
     //console.log(download);
     let newoutput;
-    const name = data.filename
+    if (!name) name = data.filename;
     if (!outputpath.endsWith('/') && !outputpath.endsWith('\\')) newoutput = outputpath + '/' + name;
     else newoutput = outputpath + name;
     // Compare sizes to see if one file is newer (determined by size, not effective but it'll work while I learn how to work with the mod.io API.)
@@ -265,7 +310,7 @@ function getModfiles(gameid, modid) {
  * Gets the comments from a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get comments from.
- * @returns Promise
+ * @return Promise
  * Object yet again contains an array called data.
  * View example here: https://docs.mod.io/?javascript--nodejs#get-mod-comments-2
  */
@@ -282,7 +327,7 @@ function getModComments(gameid, modid) {
  * Gets dependencies for a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get dependencies for.
- * @returns Promise
+ * @return Promise
  * Object yet again contains an array called data.
  * View example here: https://docs.mod.io/?javascript--nodejs#get-mod-dependencies-2
  */
@@ -310,5 +355,7 @@ module.exports = {
     usingOAuth,
     useAPIKey,
     useOAuthkey,
-    hasKey
+    hasKey,
+    subscribeTo,
+    unsubscribeFrom
 }
