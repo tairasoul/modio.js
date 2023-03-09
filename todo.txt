@@ -1,4 +1,5 @@
-add a data structure thingy that makes it easier to sort through responses
+add a data structure thingy that makes it easier to sort through responses (a class containing properties)
 add proper authentication support for other methods
 add different mod functions
 pretty much add everything other tools or apis have
+add most, if not everything in the API docs
