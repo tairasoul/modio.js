@@ -1,6 +1,8 @@
 const fs = require(`fs`);
 const fetch = require(`node-fetch`);
-const https = require('https')
+const https = require('https');
+const { Mod } = require('../lib/mod');
+const { Modfile } = require('../lib/modfile');
 
 // No logins are included as of now, due to me not understanding them and lacking general knowledge of how to obtain the necessary tokens.
 // OAuth is supported, however you cannot obtain an OAuth token through something like the Email Exchange method, or logging in through any other platforms.
@@ -167,12 +169,19 @@ function getMods(gameid) {
  * You can see an example here: https://docs.mod.io/?javascript--nodejs#mod-object
  */
 
-function getMod(gameid, modid) {
+async function getMod(gameid, modid) {
     // Send request to v1/games/{gameid}/mods/{modid} to get info about the mod.
-    return fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}?api_key=${key}`, {
+    const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
-    })
+    });
+    const res = await req.json();
+    if (res.id) {
+        return new Mod(res);
+    }
+    else {
+        throw new Error('Failed to get mod.')
+    }
 }
 
 /**
@@ -223,17 +232,22 @@ function unsubscribeFrom(gameid, modid) {
  * Gets the files of a specific mod.
  * @param {string} gameid Game to get files from.
  * @param {string} modid Mod to get files from.
- * @return Promise
+ * @return Array
  * Contains an object with an array.
  * View example here: https://docs.mod.io/?javascript--nodejs#get-modfiles-2
  */
 
-function getModfiles(gameid, modid) {
-    // Send request to v1/games/{gameid}/mods/{modid}/files to get all files from the mod.
-    return fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/files?api_key=${key}`, {
+async function getModfiles(gameid, modid) {
+    const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/files?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
     })
+    const res = await req.json();
+    const modfiles = [];
+    for (const modfile of res.data) {
+        modfiles.push(new Modfile(modfile));
+    }
+    return modfiles;
 }
 
 /**
@@ -241,7 +255,7 @@ function getModfiles(gameid, modid) {
  * @param {string} gameid Game to get mod from.
  * @param {string} modid Mod to get file from.
  * @param {string} platform Platform to get file for.
- * @return Promise
+ * @return Modfile
  * Contains an object.
  * View example here: https://docs.mod.io/?javascript--nodejs#modfile-object
  * 
@@ -249,15 +263,10 @@ function getModfiles(gameid, modid) {
 
  async function getModfile(gameid, modid, platform) {
     // This is supposed to send a request to v1/games/{gameid}/mods/{modid}/files/{fileid} to get a specific file from the mod, but I don't know where to get the fileid from.
-    const res = await getModfiles(gameid, modid);
-    const data = await res.json();
-    if (!data || !data.data) return;
-    const games = data.data;
-    for (const file of games) {
-        for (const platformsupported of file.platforms) {
-            if (platformsupported.platform == platform) {
-                return file;
-            }
+    const data = await getModfiles(gameid, modid);
+    for (const modfile of data) {
+        if (modfile.platform == platform) {
+            return new Modfile(file);
         }
     }
 }
