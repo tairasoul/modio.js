@@ -1,4 +1,4 @@
-add a data structure thingy that makes it easier to sort through responses (a class containing properties)
+add classes for the rest of the responses, not just mods and modfiles
 add proper authentication support for other methods
 add different mod functions
 pretty much add everything other tools or apis have
