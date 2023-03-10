@@ -3,3 +3,7 @@ add proper authentication support for other methods
 add different mod functions
 pretty much add everything other tools or apis have
 add most, if not everything in the API docs
+
+-- currently working on --
+
+migrating everything from using raw JSON responses from mod.io, to custom-made classes.
