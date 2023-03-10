@@ -26,7 +26,7 @@ modio.setOAuthKey('your-oauth-key'); // Get an OAuth key at mod.io/apikey
 ##### Downloading a mod
 
 ```js
-modio.downloadMod('@game', '@mod', 'platform', 'outputpath'); // Does not use ID's for game and mod, ex. '@bonelab', '@m60'. File id's are not supported yet, but will be in a future update.
+modio.downloadMod('@game', '@mod', 'platform', 'outputpath'); //  Uses ID's like'@bonelab', '@m60'. File id's are not supported yet, but will be in a future update.
 ```
 
 ##### Getting all games
@@ -62,7 +62,7 @@ const modfiles = modio.getModfiles(game, mod);
 ##### Getting a specific platform's mod files
 
 ```js
-const modfile = modio.getModfile(game, mod, platform); // Game: @game (ex. '@bonelab'), mod: @mod (ex. '@m60'), platform: 'platform', ex 'windows'
+const modfile = modio.getModfile(game, mod, platform); // Game: @game (ex. '@bonelab'), mod: @mod (ex. '@m60'), platform: 'platform', ex. 'windows'
 ```
 
 ##### Getting comments on a mod
@@ -79,7 +79,7 @@ const dependencies = modio.getModDependencies(game, mod);
 
 ## Extra info
 
-Most of these functions, if not all, return a Promise.
+Most of these functions return a Promise.
 This promise contains an object, with an array called data.
 This is structured like: 
 {
@@ -88,3 +88,5 @@ This is structured like:
     ]
 }
 You can see what these return here: https://docs.mod.io/#response-schemas
+
+Others will return a class. These will contain actual properties, making it easier to use.
