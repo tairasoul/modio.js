@@ -26,55 +26,69 @@ modio.setOAuthKey('your-oauth-key'); // Get an OAuth key at mod.io/apikey
 ##### Downloading a mod
 
 ```js
-modio.downloadMod('@game', '@mod', 'platform', 'outputpath'); //  Uses ID's like'@bonelab', '@m60'. File id's are not supported yet, but will be in a future update.
+await modio.downloadMod('@game', '@mod', 'platform', 'outputpath'); //  Uses ID's like'@bonelab', '@m60'. File id's are not supported yet, but will be in a future update.
 ```
 
 ##### Getting all games
 
 ```js
-const games = modio.getGames();
+const games = await modio.getGames();
 ```
 
 ##### Getting a specific game
 
 ```js
-const game = modio.getGame(id); // ID is same as shown in the mod download example ('@bonelab')
+const game = await modio.getGame(id); // ID is same as shown in the mod download example ('@bonelab')
 ```
 
 ##### Getting all mods for a game
 
 ```js
-const mods = modio.getMods(game); // Game is just @game, ex. '@bonelab'
+const mods = await modio.getMods(game); // Game is just @game, ex. '@bonelab'
 ```
 
 ##### Getting a specific mod
 
 ```js
-const mod = modio.getMod(game, mod); // Game: @game (ex. '@bonelab'), mod: @mod (ex. '@m60')
+const mod = await modio.getMod(game, mod); // Game: @game (ex. '@bonelab'), mod: @mod (ex. '@m60')
 ```
 
 ##### Getting a mod's files
 
 ```js
-const modfiles = modio.getModfiles(game, mod);
+const modfiles = await modio.getModfiles(game, mod);
 ```
 
 ##### Getting a specific platform's mod files
 
 ```js
-const modfile = modio.getModfile(game, mod, platform); // Game: @game (ex. '@bonelab'), mod: @mod (ex. '@m60'), platform: 'platform', ex. 'windows'
+const modfile = await modio.getModfile(game, mod, platform); // Game: @game (ex. '@bonelab'), mod: @mod (ex. '@m60'), platform: 'platform', ex. 'windows'
 ```
 
 ##### Getting comments on a mod
 
 ```js
-const comments = modio.getModComments(game ,mod);
+const comments = await modio.getModComments(game ,mod);
 ```
 
 ##### Getting a mod's dependencies
 
 ```js
-const dependencies = modio.getModDependencies(game, mod);
+const dependencies = await modio.getModDependencies(game, mod);
+```
+## OAuth is needed for the following functions.
+
+##### Getting all subscribed mods
+
+```js
+const mods = await modio.getSubscriptions();
+```
+
+##### Subscribing and unsubscribing from a mod
+
+```js
+const subscribed = await modio.subscribeTo('@game', '@mod');
+const unsubscribed = await modio.unsubscribeFrom('@game', '@mod');
 ```
 
 ## Extra info
