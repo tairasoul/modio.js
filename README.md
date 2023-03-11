@@ -93,14 +93,4 @@ const unsubscribed = await modio.unsubscribeFrom('@game', '@mod');
 
 ## Extra info
 
-Most of these functions return a Promise.
-This promise contains an object, with an array called data.
-This is structured like: 
-{
-    data: [
-        ...
-    ]
-}
-You can see what these return here: https://docs.mod.io/#response-schemas
-
-Others will return a class. These will contain actual properties, making it easier to use.
+All functions, other than getModDependencies, return a class.
