@@ -1,6 +1,8 @@
 import {get as httpGet} from 'https';
 import {createWriteStream as write} from 'fs';
 
+import * as interfaces from './interfaces'
+
 export class Modfile {
     filesize: number;
     id: number;
@@ -17,7 +19,7 @@ export class Modfile {
     metadata_blob: string;
     binary_url: string;
     date_expires: number;
-    platform: string;
+    platforms: Array<interfaces.platform>;
     constructor(tbl: any) {
         this.id = tbl.id;
         this.mod_id = tbl.mod_id;
@@ -34,7 +36,18 @@ export class Modfile {
         this.metadata_blob = tbl.metadata_blob;
         this.binary_url = tbl.download.binary_url;
         this.date_expires = tbl.download.date_expires;
-        this.platform = tbl.platforms[0].platform;
+        if (tbl.platforms.length > 0) {
+            this.platforms = [];
+            for (const platform of tbl.platforms) {
+                for (let i = 0; i < tbl.platforms.length; i++) {
+                    const tplat = this.platforms[i];
+                    const tblplat = platform;
+                    tplat.label = tblplat.label;
+                    tplat.moderated = tblplat.moderated;
+                    tplat.platform = tblplat.platform;
+                }
+            }
+        }
     }
     async download(path: string) {
         let pipe;
