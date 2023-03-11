@@ -1,20 +1,11 @@
+import * as interfaces from './interfaces';
+import { Modfile } from './modfile';
 export declare class Mod {
     id: number;
     game_id: number;
     status: number;
     visible: number;
-    submitter_id: number;
-    submitter_name_id: string;
-    submitter_username: string;
-    submitter_date_online: number;
-    submitter_date_joined: number;
-    submitter_avatar_filename: string;
-    submitter_avatar_original: string;
-    submitter_avatar_50x50: string;
-    submitter_avatar_100x100: string;
-    submitter_timezone: string;
-    submitter_language: string;
-    submitter_profile_url: string;
+    submitter: interfaces.submitter;
     date_added: number;
     date_updated: number;
     date_live: number;
@@ -23,11 +14,7 @@ export declare class Mod {
     monetisation_options: number;
     price: number;
     tax: number;
-    logo_filename: string;
-    logo_original: string;
-    logo_320x180: string;
-    logo_640x360: string;
-    logo_1280x720: string;
+    logo: interfaces.logo;
     homepage_url: string;
     name: string;
     name_id: string;
