@@ -4,6 +4,7 @@ const https = require('https');
 const { Mod } = require('../lib/mod');
 const { Modfile } = require('../lib/modfile');
 const { Comment } = require('../lib/comment');
+const { Game } = require('../lib/game');
 
 // No logins are included as of now, due to me not understanding them and lacking general knowledge of how to obtain the necessary tokens.
 // OAuth is supported, however you cannot obtain an OAuth token through something like the Email Exchange method, or logging in through any other platforms.
@@ -110,37 +111,42 @@ function hasKey() {
 /**
     * Get all games.
     *
-    * @return Promise
+    * @return Array
     * 
-    * Returns an object containing an array called data.
-    * Data contains objects, representing each game.
-    * The objects contain something like shown in mod.io's official API docs: https://docs.mod.io/?javascript--nodejs#get-games-2
+    * Returns an array containing Game objects.
 
 */
 
-function getGames() {
+async function getGames() {
     // Send request to /v1/games endpoint to get all games.
-    return fetch(`https://api.mod.io/v1/games?api_key=${key}`, {
+    const req = await fetch(`https://api.mod.io/v1/games?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
     })
+    // Parse request into JSON object
+    const games = await req.json();
+    const gamearray = [];
+    // Create a new Game class for each game.
+    for (const game of games.data) {
+        gamearray.push(new Game(game));
+    }
+    return gamearray
 }
 
 /**
  * Gets a specific game.
  * @param {string} id ID of the game.
- * @return Promise
+ * @return Game
  * 
- * Returns an object, containing multiple properties, including the game ID, status and others.
- * You can see an example of it here: https://docs.mod.io/?javascript--nodejs#game-object
+ * Returns a Game class.
  */
 
-function getGame(id) {
-    // Send request to /v1/games endpoint with game ID to get details about the game.
-    return fetch(`https://api.mod.io/v1/games/${id}?api_key=${key}`, {
+async function getGame(id) {
+    // Send request to /v1/games endpoint with game ID, parse response and pass parsed response into a new Game class.
+    return new Game(await (await fetch(`https://api.mod.io/v1/games/${id}?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
-    })
+    })).json());
 }
 
 /**
@@ -149,7 +155,6 @@ function getGame(id) {
  * @return Array
  * 
  * Returns an array containing Mod classes.
- * You can see an example here: https://docs.mod.io/?javascript--nodejs#get-mods-2
  */
 
 async function getMods(gameid) {
@@ -158,9 +163,12 @@ async function getMods(gameid) {
         method: `GET`,
         headers: defaultHeaders
     });
+    // Parse request into JSON object
     const res = await req.json();
     const mods = []
+    // Sort through all the resulting mods
     for (const mod of res) {
+        // Check if they all have an ID property, thus checking if they returned a mod object or an error object.
         if (mod.id) {
             mods.push(new Mod(mod));
         }
@@ -174,7 +182,6 @@ async function getMods(gameid) {
  * @param {string} modid The ID of the mod to get.
  * @return Mod
  * Returns a Mod class.
- * You can see an example here: https://docs.mod.io/?javascript--nodejs#mod-object
  */
 
 async function getMod(gameid, modid) {
@@ -183,7 +190,9 @@ async function getMod(gameid, modid) {
         method: `GET`,
         headers: defaultHeaders
     });
+    // Turn request into JSON
     const res = await req.json();
+    // Check if it actually was able to get the mod
     if (res.id) {
         return new Mod(res);
     }
@@ -196,42 +205,42 @@ async function getMod(gameid, modid) {
  * Subscribe to a mod. Needs OAuth key.
  * @param {string} gameid The game the mod is for.
  * @param {string} modid The mod you want to subscribe to.
- * @return Promise
+ * @return Object
  * 
  * Subscribes to a mod.
  */
 
-function subscribeTo(gameid, modid) {
+async function subscribeTo(gameid, modid) {
     if (!isUsingOAuth) throw new Error('susbcribeTo requires an OAuth key to function.')
-    return fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+    return new Mod(await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${oauthkey}`,
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json'
         }
-    })
+    })).json())
 }
 
 /**
  * Unsubscribe from a mod. Needs OAuth key.
  * @param {string} gameid The game the mod is for.
  * @param {string} modid The mod you want to unsubscribe from.
- * @return Promise
+ * @return Object
  * 
  * Unsubscribes from a mod.
  */
 
-function unsubscribeFrom(gameid, modid) {
+async function unsubscribeFrom(gameid, modid) {
     if (!isUsingOAuth) throw new Error('unsubscribeFrom requires an OAuth key to function.')
-    return fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+    return await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${oauthkey}`,
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json'
         }
-    })
+    })).json()
 }
 
 // This only contains basic mod functions, no uploading, adding, editing or deleting yet.
@@ -241,19 +250,31 @@ function unsubscribeFrom(gameid, modid) {
  * @param {string} gameid Game to get files from.
  * @param {string} modid Mod to get files from.
  * @return Array
- * Array contains all of the mod's modfiles, using Modfile class.
- * View example here: https://docs.mod.io/?javascript--nodejs#get-modfiles-2
+ * Array contains the mod's latest modfiles.
  */
 
 async function getModfiles(gameid, modid) {
-    const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/files?api_key=${key}`, {
+    // Get the mod, in order to get the latest live modfiles.
+    const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
     })
+    // Turn the request into a JSON object.
     const res = await req.json();
     const modfiles = [];
-    for (const modfile of res.data) {
-        modfiles.push(new Modfile(modfile));
+    const latest = [];
+    // Make a request to the /files endpoint to get all files.
+    const modfilesreq = await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/files?api_key=${key}`, {
+        method: `GET`,
+        headers: defaultHeaders
+    })).json()
+    // Add both mod ID's to the latest array.
+    for (const latestmodfile of res.platforms) {
+        latest.push(latestmodfile.modfile_live);
+    }
+    for (const modfile of modfilesreq.data) {
+        // If latest array contains the id, push it to the modfiles array.
+        if (latest.includes(modfile.id)) modfiles.push(new Modfile(modfile));
     }
     return modfiles;
 }
@@ -286,7 +307,7 @@ async function getModfiles(gameid, modid) {
  * @param {string} platform Platform to get file for.
  * @param {string} outputpath Where to put the file.
  * @param {boolean} useNameID To use the name ID in the link. This is to prevent mods with files that have the same names from overwriting eachother.
- * @return Promise
+ * @return Object
  * 
  * Downloads a mod from the website.
  */
@@ -327,7 +348,7 @@ async function getModfiles(gameid, modid) {
  * Gets the comments from a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get comments from.
- * @return Promise
+ * @return Object
  * Object yet again contains an array called data.
  * View example here: https://docs.mod.io/?javascript--nodejs#get-mod-comments-2
  */
@@ -340,6 +361,7 @@ async function getModComments(gameid, modid) {
     });
     const res = await req.json();
     const comments = [];
+    // Sort through resulting json to get all comments
     for (const comment of res.data) {
         if (comment.id) {
             comments.push(new Comment(comment));
@@ -352,17 +374,17 @@ async function getModComments(gameid, modid) {
  * Gets dependencies for a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get dependencies for.
- * @return Promise
+ * @return Object
  * Object yet again contains an array called data.
  * View example here: https://docs.mod.io/?javascript--nodejs#get-mod-dependencies-2
  */
 
-function getModDependencies(gameid, modid) {
+async function getModDependencies(gameid, modid) {
     // Send request to v1/games/{gameid}/mods/{modid}/dependencies to get mod dependencies.
-    return fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/dependencies?api_key=${key}`, {
+    return await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/dependencies?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
-    })
+    })).json()
 }
 
 module.exports = {
@@ -382,5 +404,7 @@ module.exports = {
     useOAuthkey,
     hasKey,
     subscribeTo,
-    unsubscribeFrom
+    unsubscribeFrom,
+    isUsingAPIKey,
+    isUsingOAuth
 }
