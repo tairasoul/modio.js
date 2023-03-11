@@ -1,9 +1,12 @@
+-- todo --
+
 add classes for the rest of the responses, not just mods and modfiles
 add proper authentication support for other methods
 add different mod functions
 pretty much add everything other tools or apis have
 add most, if not everything in the API docs
 
--- currently working on --
+-- mostly finished --
 
 migrating everything from using raw JSON responses from mod.io, to custom-made classes.
+have yet to migrate: getModDependencies
