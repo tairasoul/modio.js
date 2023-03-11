@@ -1,3 +1,4 @@
+import * as interfaces from './interfaces';
 export declare class Modfile {
     filesize: number;
     id: number;
@@ -14,7 +15,7 @@ export declare class Modfile {
     metadata_blob: string;
     binary_url: string;
     date_expires: number;
-    platform: string;
+    platforms: Array<interfaces.platform>;
     constructor(tbl: any);
     download(path: string): Promise<unknown>;
 }
