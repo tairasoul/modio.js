@@ -249,11 +249,13 @@ async function unsubscribeFrom(gameid, modid) {
  * Gets the files of a specific mod.
  * @param {string} gameid Game to get files from.
  * @param {string} modid Mod to get files from.
+ * @param {function} customErrorHandler A custom error handler function, res and modfilesreq (res is request sent to v1/games/${gameid}/mods/${modid} and turned into json, modfilesreq is sent to /files and turned into json. Both will have an error property if the request fails. Order: customErrorHandler(gameid, modid, res, modfilesreq, firstCall). firstCall will be false.)
+ * @param {boolean} firstCall This is for internal use. Setting this will very likely break the function if it has to retry.
  * @return Array
  * Array contains the mod's latest modfiles.
  */
 
-async function getModfiles(gameid, modid) {
+async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) {
     // Get the mod, in order to get the latest live modfiles.
     const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}?api_key=${key}`, {
         method: `GET`,
@@ -268,15 +270,39 @@ async function getModfiles(gameid, modid) {
         method: `GET`,
         headers: defaultHeaders
     })).json()
+    // Check if either of them errored, and retry twice
+    if (!customErrorHandler && firstCall && (res.error || modfilesreq.error)) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                getModfiles(gameid, modid, false).then(resolve).catch(() => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            getModfiles(gameid, modid, false).then(resolve).catch((error) => {
+                                reject('Failed to get modfiles. Error returned: ' + error)
+                            })
+                        }, 5000)
+                    })
+                })
+            }, 5000)
+        })
+    }
+    if (customErrorHandler && firstCall) {
+        customErrorHandler(gameid, modid, res, modfilesreq, false);
+    }
     // Add both mod ID's to the latest array.
-    for (const latestmodfile of res.platforms) {
-        latest.push(latestmodfile.modfile_live);
+    if (!res.modfile || !res.modfile.id) { 
+        for (const latestmodfile of res.platforms) {
+            latest.push(latestmodfile.modfile_live);
+        }
+        for (const modfile of modfilesreq.data) {
+            // If latest array contains the id, push it to the modfiles array.
+            if (latest.includes(modfile.id)) modfiles.push(new Modfile(modfile));
+        }
+        return modfiles;
     }
-    for (const modfile of modfilesreq.data) {
-        // If latest array contains the id, push it to the modfiles array.
-        if (latest.includes(modfile.id)) modfiles.push(new Modfile(modfile));
+    else {
+        return new Modfile(res.modfile)
     }
-    return modfiles;
 }
 
 /**
@@ -301,6 +327,28 @@ async function getModfiles(gameid, modid) {
 }
 
 /**
+ * Get all mods the user is subscribed to.
+ * 
+ * @return Array
+ * 
+ * Returns an array of Mods.
+ */
+
+async function getSubscriptions() {
+    if (!isUsingOAuth && !oauthkey) throw new Error("OAuth has to be set.")
+    const req = await fetch('https://api.mod.io/v1/me/subscribed', {
+        method: 'GET',
+        headers: defaultHeaders
+    })
+    const res = await req.json();
+    const mods = [];
+    for (const mod of res.data) {
+        mods.push(new Mod(mod));
+    }
+    return mods
+}
+
+/**
  * Downloads a mod.
  * @param {string} gameid Game to download mod from.
  * @param {string} modid Mod to download file from.
@@ -316,9 +364,9 @@ async function getModfiles(gameid, modid) {
     // This was supposed to send a request to v1/games/{gameid}/mods/{modid}/files/{fileid} to get a specific file from the mod, but I don't know where to get the fileid from while minimizing requests.
     const data = await getModfile(gameid, modid, platform);
     let name;
-    if (useNameID) name = (await (await getMod(gameid, modid)).json()).name_id + '.zip';
-    if (!data || !data.download) return;
-    const download = data.download.binary_url;
+    if (useNameID) name = (await getMod(gameid, modid)).name_id + '.zip';
+    if (!data || !data.binary_url) return;
+    const download = data.binary_url;
     //console.log(download);
     let newoutput;
     if (!name) name = data.filename;
@@ -405,6 +453,7 @@ module.exports = {
     hasKey,
     subscribeTo,
     unsubscribeFrom,
+    getSubscriptions,
     isUsingAPIKey,
     isUsingOAuth
 }
