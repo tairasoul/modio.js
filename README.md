@@ -4,8 +4,7 @@ This is currently a very unfinished library.
 Docs are still very basic, and most API features you'll get using libraries for other languages (python, cli) are not here.
 Made this because there were no other libraries for using the mod.io API for nodejs, and I decided to publish it because other people might be looking for a module to use mod.io API too.
 
-## Examples
-
+## Usage
 
 ##### Setting API key
 
@@ -56,7 +55,7 @@ const mod = await modio.getMod(game, mod); // Game: @game (ex. '@bonelab'), mod:
 ##### Getting a mod's files
 
 ```js
-const modfiles = await modio.getModfiles(game, mod);
+const modfiles = await modio.getModfiles(game, mod); // Extra arg: customErrorHandler. This arg is a function that handles mod request and modfile request errors. It gets the gameid, modid, res json, modfile res json and firstCall bool sent in. firstCall is an internal arg, which is passed in as false. Pass this in as the 4th argument to getModfiles if you decide to re-call getModfiles.
 ```
 
 ##### Getting a specific platform's mod files
