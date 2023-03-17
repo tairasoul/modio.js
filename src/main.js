@@ -26,7 +26,7 @@ let defaultHeaders = {
 /**
  * Send a request to the user's email for a security code.
  * @param {string} email Email to send to.
- * @returns {Message}
+ * @returns {Promise<Message>}
  */
 
 async function email_request(email) {
@@ -43,7 +43,7 @@ async function email_request(email) {
 /**
  * Finish email exchange.
  * @param {string} code 
- * @returns {AccessTokenObject}
+ * @returns {Promise<AccessTokenObject>}
  * 
  * Access token is in property access_token.
  */
