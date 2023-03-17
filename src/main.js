@@ -5,6 +5,8 @@ const { Mod } = require('../lib/mod');
 const { Modfile } = require('../lib/modfile');
 const { Comment } = require('../lib/comment');
 const { Game } = require('../lib/game');
+const { Message, AccessTokenObject } = require('../lib/misc');
+const { APIError } = require('../lib/error');
 
 // No logins are included as of now, due to me not understanding them and lacking general knowledge of how to obtain the necessary tokens.
 // OAuth is supported, however you cannot obtain an OAuth token through something like the Email Exchange method, or logging in through any other platforms.
@@ -20,6 +22,42 @@ let defaultHeaders = {
 }
 
 // The OAuth and API key functions can probably still be improved.
+
+/**
+ * Send a request to the user's email for a security code.
+ * @param {string} email Email to send to.
+ * @returns {Message}
+ */
+
+async function email_request(email) {
+    if (!key) throw new Error('email_request needs an API key.');
+    return new Message(await (await fetch(`https://api.mod.io/v1/oauth/emailrequest?api_key=${key}&email=${email}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+        }
+    })).json())
+}
+
+/**
+ * Finish email exchange.
+ * @param {string} code 
+ * @returns {AccessTokenObject}
+ * 
+ * Access token is in property access_token.
+ */
+
+async function email_exchange(code) {
+    if (!key) throw new Error('email_request needs an API key.')
+    return new AccessTokenObject(await (await fetch(`https://api.mod.io/v1/oauth/emailexchange?api_key=${key}&security_code=${code}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+        }
+    })).json())
+}
 
 /**
  * Start using API key.
@@ -335,7 +373,8 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
  */
 
 async function getSubscriptions() {
-    if (!isUsingOAuth && !oauthkey) throw new Error("OAuth has to be set.")
+    if (!oauthkey) throw new Error("OAuth has to be set.")
+    useOAuthkey();
     const req = await fetch('https://api.mod.io/v1/me/subscribed', {
         method: 'GET',
         headers: defaultHeaders
@@ -454,6 +493,8 @@ module.exports = {
     subscribeTo,
     unsubscribeFrom,
     getSubscriptions,
+    email_request,
+    email_exchange,
     isUsingAPIKey,
     isUsingOAuth
 }
