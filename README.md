@@ -22,6 +22,19 @@ const modio = require('modio.js');
 modio.setOAuthKey('your-oauth-key'); // Get an OAuth key at mod.io/apikey
 ```
 
+##### Using Email Exchange
+
+```js
+// Api key is needed.
+const message = await modio.email_request('someperson@someservice.com');
+
+// The user has to input the security code, so use whatever you use for getting user input.
+const code = (await inquirer.prompt({type: 'input', name: 'oauth', message: 'Input the OAuth key you got.'})).oauth;
+
+// Returns an Access Token class.
+const accesstoken = await modio.email_exchange(code);
+```
+
 ##### Downloading a mod
 
 ```js
