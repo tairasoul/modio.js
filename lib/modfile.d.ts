@@ -17,5 +17,5 @@ export declare class Modfile {
     date_expires: number;
     platforms: Array<interfaces.platform>;
     constructor(tbl: any);
-    download(path: string): Promise<unknown>;
+    downloadFile(path: string): Promise<unknown>;
 }
