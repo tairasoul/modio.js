@@ -1,3 +1,5 @@
+import { platform } from "os";
+
 export interface avatar {
     filename: string;
     original: string;
@@ -73,5 +75,6 @@ export interface theme {
 export interface platform {
     platform: string;
     label: string;
-    moderated: boolean
+    moderated: boolean;
+    status: number;
 }
