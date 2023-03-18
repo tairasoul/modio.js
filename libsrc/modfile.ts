@@ -51,14 +51,14 @@ export class Modfile {
         }
     }
     async downloadFile(path: string) {
-        let stream;
-        httpGet(this.binary_url, (incoming) => {
-            stream = write(path)
-            incoming.pipe(stream)
-        })
+        
         return new Promise((resolve, reject) => {
-            stream.on('finish', () => resolve);
-            stream.on('error', () => reject);
+            httpGet(this.binary_url, (incoming) => {
+                const stream = write(path)
+                incoming.pipe(stream)
+                stream.on('finish', () => resolve);
+                stream.on('error', () => reject);
+            })
         })
     }
 }
