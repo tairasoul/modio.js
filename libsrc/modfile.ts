@@ -38,25 +38,27 @@ export class Modfile {
         this.date_expires = tbl.download.date_expires;
         if (tbl.platforms.length > 0) {
             this.platforms = [];
-            for (const platform of tbl.platforms) {
-                for (let i = 0; i < tbl.platforms.length; i++) {
-                    const tplat = this.platforms[i];
-                    const tblplat = platform;
-                    tplat.label = tblplat.label;
-                    tplat.moderated = tblplat.moderated;
-                    tplat.platform = tblplat.platform;
+            for (let i = 0; i < tbl.platforms.length; i++) {
+                const tblplat = tbl.platforms[i];
+                const tplat: interfaces.platform = {
+                  label: tblplat.label ?? '',
+                  moderated: tblplat.moderated ?? true,
+                  platform: tblplat.platform ?? '',
+                  status: tblplat.status ?? 0
                 }
+                this.platforms.push(tplat);
             }
         }
     }
-    async download(path: string) {
-        let pipe;
+    async downloadFile(path: string) {
+        let stream;
         httpGet(this.binary_url, (incoming) => {
-            pipe = incoming.pipe(write(path))
+            stream = write(path)
+            incoming.pipe(stream)
         })
         return new Promise((resolve, reject) => {
-            pipe.on('finish', () => resolve);
-            pipe.on('error', () => reject);
+            stream.on('finish', () => resolve);
+            stream.on('error', () => reject);
         })
     }
 }
