@@ -61,7 +61,7 @@ async function email_exchange(code) {
 
 /**
  * Start using API key.
- * @return void
+ * @returns {void}
  * 
  * Throws an error if the API key hasn't been set.
  */
@@ -81,7 +81,7 @@ function useAPIKey() {
 
 /**
  * Start using OAuth key.
- * @return void
+ * @returns {void}
  * 
  * Throws an error if the Oauth key hasn't been set.
  */
@@ -103,7 +103,7 @@ function useOAuthkey() {
 /**
  * Set API key.
  * @param apikey The api key to use.
- * @return void
+ * @returns {void}
  * 
  * Sets the API key, and starts using it. (calls the useAPIKey() function)
  */
@@ -116,7 +116,7 @@ function setAPIKey(apikey) {
 /**
  * Set OAuth key.
  * @param apikey The OAuth key to use.
- * @return void
+ * @returns {void}
  * 
  * Sets the OAuth key, and starts using it. (calls the useOAuthkey() function)
  */
@@ -128,7 +128,7 @@ function setOAuthKey(oauth) {
 
 /**
  * Returns true if OAuth is currently being used, else returns false.
- * @return boolean
+ * @returns {boolean}
  */
 
 function usingOAuth() {
@@ -138,7 +138,7 @@ function usingOAuth() {
 
 /**
  * Checks if a key has been set.
- * @return boolean
+ * @returns {boolean}
  */
 
 function hasKey() {
@@ -149,7 +149,7 @@ function hasKey() {
 /**
     * Get all games.
     *
-    * @return Array
+    * @returns {Promise<Array<Game>>}
     * 
     * Returns an array containing Game objects.
 
@@ -174,7 +174,7 @@ async function getGames() {
 /**
  * Gets a specific game.
  * @param {string} id ID of the game.
- * @return Game
+ * @returns {Promise<Game>}
  * 
  * Returns a Game class.
  */
@@ -190,7 +190,7 @@ async function getGame(id) {
 /**
  * Gets all the mods a game has.
  * @param {string} gameid ID of the game to get mods from.
- * @return Array
+ * @returns {Promise<Array<Game>>}
  * 
  * Returns an array containing Mod classes.
  */
@@ -218,7 +218,7 @@ async function getMods(gameid) {
  * Gets a mod from a specific game.
  * @param {string} gameid The gameID to get the mod from.
  * @param {string} modid The ID of the mod to get.
- * @return Mod
+ * @returns {Promise<Mod>}
  * Returns a Mod class.
  */
 
@@ -243,14 +243,37 @@ async function getMod(gameid, modid) {
  * Subscribe to a mod. Needs OAuth key.
  * @param {string} gameid The game the mod is for.
  * @param {string} modid The mod you want to subscribe to.
- * @return Object
+ * @returns {Promise<Mod> | Promise<APIError>}
  * 
  * Subscribes to a mod.
  */
 
 async function subscribeTo(gameid, modid) {
+    if (!oauthkey) throw new Error('susbcribeTo requires an OAuth key to function.')
+    const json = await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${oauthkey}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+        }
+    })).json()
+    if (!json.error) return new Mod(json);
+    else return new APIError(json);
+}
+
+/**
+ * 
+ * @param {string} gameid 
+ * @param {string} modid 
+ * @param {string} rating 
+ * @returns {Promise<Message>}
+ */
+
+async function addRating(gameid, modid, rating) {
+    if (rating != 1 && rating != -1 && rating != 0) throw new Error('Rating must be 1, -1 or 0.')
     if (!isUsingOAuth) throw new Error('susbcribeTo requires an OAuth key to function.')
-    return new Mod(await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+    return new Message(await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/ratings?rating=${rating}`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${oauthkey}`,
@@ -264,21 +287,21 @@ async function subscribeTo(gameid, modid) {
  * Unsubscribe from a mod. Needs OAuth key.
  * @param {string} gameid The game the mod is for.
  * @param {string} modid The mod you want to unsubscribe from.
- * @return Object
+ * @returns {Promise<Mod>}
  * 
  * Unsubscribes from a mod.
  */
 
 async function unsubscribeFrom(gameid, modid) {
-    if (!isUsingOAuth) throw new Error('unsubscribeFrom requires an OAuth key to function.')
-    return await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+    if (!oauthkey) throw new Error('unsubscribeFrom requires an OAuth key to function.')
+    return await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${oauthkey}`,
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json'
         }
-    })).json()
+    })
 }
 
 // This only contains basic mod functions, no uploading, adding, editing or deleting yet.
@@ -289,7 +312,7 @@ async function unsubscribeFrom(gameid, modid) {
  * @param {string} modid Mod to get files from.
  * @param {function} customErrorHandler A custom error handler function, res and modfilesreq (res is request sent to v1/games/${gameid}/mods/${modid} and turned into json, modfilesreq is sent to /files and turned into json. Both will have an error property if the request fails. Order: customErrorHandler(gameid, modid, res, modfilesreq, firstCall). firstCall will be false.)
  * @param {boolean} firstCall This is for internal use. Setting this will very likely break the function if it has to retry.
- * @return Array
+ * @returns {Promise<Array<Modfile>>}
  * Array contains the mod's latest modfiles.
  */
 
@@ -339,7 +362,7 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
         return modfiles;
     }
     else {
-        return new Modfile(res.modfile)
+        return [new Modfile(res.modfile)]
     }
 }
 
@@ -348,7 +371,7 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
  * @param {string} gameid Game to get mod from.
  * @param {string} modid Mod to get file from.
  * @param {string} platform Platform to get file for.
- * @return Modfile
+ * @returns {Promise<Modfile>}
  * Returns a Modfile class.
  * View example here: https://docs.mod.io/?javascript--nodejs#modfile-object
  * 
@@ -358,8 +381,15 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
     // This is supposed to send a request to v1/games/{gameid}/mods/{modid}/files/{fileid} to get a specific file from the mod, but I don't know where to get the fileid from.
     const data = await getModfiles(gameid, modid);
     for (const modfile of data) {
-        if (modfile.platform == platform) {
-            return new Modfile(file);
+        if (modfile.platform) {
+            if (modfile.platform == platform) {
+                return modfile;
+            }
+        }
+        else {
+            for (const platform of modfile.platforms) {
+                if (platform.platform = platform) return modfile
+            }
         }
     }
 }
@@ -367,7 +397,7 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
 /**
  * Get all mods the user is subscribed to.
  * 
- * @return Array
+ * @returns {Promise<Array<Mod>>}
  * 
  * Returns an array of Mods.
  */
@@ -394,7 +424,7 @@ async function getSubscriptions() {
  * @param {string} platform Platform to get file for.
  * @param {string} outputpath Where to put the file.
  * @param {boolean} useNameID To use the name ID in the link. This is to prevent mods with files that have the same names from overwriting eachother.
- * @return Object
+ * @return {Promise<void>}
  * 
  * Downloads a mod from the website.
  */
@@ -421,13 +451,13 @@ async function getSubscriptions() {
         method: 'GET'
     });
     const newurl = res.url;
-    //console.log(newurl);
-    const downloading = https.get(newurl, (res) => {
-        res.pipe(fs.createWriteStream(newoutput))
-    });
     return new Promise((resolve, reject) => {
-        downloading.on('close', () => resolve);
-        downloading.on('error', () => reject);
+        https.get(newurl, (res) => {
+            const stream = fs.createWriteStream(newoutput);
+            res.pipe(stream);
+            stream.on('finish', resolve);
+            stream.on('error', reject);
+        });
     })
 }
 
@@ -435,9 +465,7 @@ async function getSubscriptions() {
  * Gets the comments from a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get comments from.
- * @return Object
- * Object yet again contains an array called data.
- * View example here: https://docs.mod.io/?javascript--nodejs#get-mod-comments-2
+ * @returns {Promise<Array<Comment>>}
  */
 
 async function getModComments(gameid, modid) {
@@ -461,7 +489,7 @@ async function getModComments(gameid, modid) {
  * Gets dependencies for a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get dependencies for.
- * @return Object
+ * @returns {Promise<Object>}
  * Object yet again contains an array called data.
  * View example here: https://docs.mod.io/?javascript--nodejs#get-mod-dependencies-2
  */
@@ -495,6 +523,7 @@ module.exports = {
     getSubscriptions,
     email_request,
     email_exchange,
+    addRating,
     isUsingAPIKey,
     isUsingOAuth
 }
