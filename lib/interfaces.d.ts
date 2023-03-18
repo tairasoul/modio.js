@@ -66,4 +66,5 @@ export interface platform {
     platform: string;
     label: string;
     moderated: boolean;
+    status: number;
 }
