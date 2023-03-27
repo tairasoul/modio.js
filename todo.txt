@@ -1,12 +1,24 @@
 -- todo --
 
-add classes for the rest of the responses, not just mods and modfiles
-add proper authentication support for other methods
-add different mod functions
-pretty much add everything other tools or apis have
-add most, if not everything in the API docs
+add proper authentication support for methods other than email
+add mod uploading
+add multipart mod uploading
+add mod and guide comment related functions
+add media functions
+add mod event functions
+add tag functions
+add game and mod stat functions
+add metadata functions
+add capability to add or remove mod dependencies
+add getting a mod's team members
+add getting a resource's owner
+add report submitting
+add agreement functions (getting agreement, getting specific version)
+add mute and unmute user functions
+add the rest of the Me part of the docs (https://docs.mod.io/?javascript--nodejs#get-authenticated-user)
+add guide related functions
 
--- mostly finished --
+-- finished --
 
-migrating everything from using raw JSON responses from mod.io, to custom-made classes.
-have yet to migrate: getModDependencies
+email exchange
+class migration
