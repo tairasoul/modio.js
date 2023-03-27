@@ -109,11 +109,15 @@ const unsubscribed = await modio.unsubscribeFrom('@game', '@mod');
 const message = await modio.addRating('@game', '@mod', rating) // Rating can be -1, 0 or 1. -1 is negative, 0 removes previous rating and 1 is positive.
 ```
 
+## Exposed variables
+
+Exposed variables are isUsingAPIKey and isUsingOAuth. Use these to see whether or not APIKey or OAuth are being used.
+
 ## Extra info
 
 All functions, other than getModDependencies, return a class.
 
 ## Changelog
 
-Add changelog.
-Fix function naming as mentioned in [issue 1](https://github.com/fheahdythdr/modio.js/issues/1)
+Remove unnecessary functions, when I'm already exposing the variables they're checking.
+Add more comments to source.
