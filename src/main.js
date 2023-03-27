@@ -28,7 +28,6 @@ let defaultHeaders = {
 /**
  * Send a request to the user's email for a security code.
  * @param {string} email Email to send to.
- * @returns {Promise<Message>}
  */
 
 async function emailRequest(email) {
@@ -45,7 +44,6 @@ async function emailRequest(email) {
 /**
  * Finish email exchange.
  * @param {string} code 
- * @returns {Promise<AccessTokenObject>}
  * 
  * Access token is in property access_token.
  */
@@ -63,7 +61,6 @@ async function emailExchange(code) {
 
 /**
  * Start using API key.
- * @returns {void}
  * 
  * Throws an error if the API key hasn't been set.
  */
@@ -83,7 +80,6 @@ function useAPIKey() {
 
 /**
  * Start using OAuth key.
- * @returns {void}
  * 
  * Throws an error if the Oauth key hasn't been set.
  */
@@ -105,45 +101,31 @@ function useOAuthkey() {
 /**
  * Set API key.
  * @param apikey The api key to use.
- * @returns {void}
  * 
- * Sets the API key, and starts using it. (calls the useAPIKey() function)
+ * Sets the API key.
  */
 
 function setAPIKey(apikey) {
     key = apikey
-    useAPIKey();
 }
 
 /**
  * Set OAuth key.
  * @param apikey The OAuth key to use.
- * @returns {void}
  * 
- * Sets the OAuth key, and starts using it. (calls the useOAuthkey() function)
+ * Sets the OAuth key.
  */
 
 function setOAuthKey(oauth) {
     oauthkey = oauth
-    useOAuthkey();
-}
-
-/**
- * Returns true if OAuth is currently being used, else returns false.
- * @returns {boolean}
- */
-
-function usingOAuth() {
-    if (isUsingOAuth) return true
-    else return false;
 }
 
 /**
  * Checks if a key has been set.
- * @returns {boolean}
  */
 
 function hasKey() {
+    // I don't know how to use ?? properly, so I'm doing this.
     if (isUsingOAuth || isUsingAPIKey) return true
     else return false;
 }
@@ -151,8 +133,6 @@ function hasKey() {
 /**
     * Get all games.
     *
-    * @returns {Promise<Array<Game>>}
-    * 
     * Returns an array containing Game objects.
 
 */
@@ -170,29 +150,32 @@ async function getGames() {
     for (const game of games.data) {
         gamearray.push(new Game(game));
     }
+    // Return array
     return gamearray
 }
 
 /**
  * Gets a specific game.
  * @param {string} id ID of the game.
- * @returns {Promise<Game>}
  * 
  * Returns a Game class.
  */
 
 async function getGame(id) {
     // Send request to /v1/games endpoint with game ID, parse response and pass parsed response into a new Game class.
-    return new Game(await (await fetch(`https://api.mod.io/v1/games/${id}?api_key=${key}`, {
+    const data = await fetch(`https://api.mod.io/v1/games/${id}?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
-    })).json());
+    })
+    // Turn data into json
+    const json = await data.json()
+    // Return game object
+    return new Game(json);
 }
 
 /**
  * Gets all the mods a game has.
  * @param {string} gameid ID of the game to get mods from.
- * @returns {Promise<Array<Mod>>}
  * 
  * Returns an array containing Mod classes.
  */
@@ -220,7 +203,6 @@ async function getMods(gameid) {
  * Gets a mod from a specific game.
  * @param {string} gameid The gameID to get the mod from.
  * @param {string} modid The ID of the mod to get.
- * @returns {Promise<Mod | APIError>}
  * Returns a Mod class.
  */
 
@@ -248,50 +230,56 @@ async function getMod(gameid, modid) {
  * Subscribe to a mod. Needs OAuth key.
  * @param {string} gameid The game the mod is for.
  * @param {string} modid The mod you want to subscribe to.
- * @returns {Promise<Mod> | Promise<APIError>}
  * 
  * Subscribes to a mod.
  */
 
 async function subscribeTo(gameid, modid) {
     if (!oauthkey) throw new Error('susbcribeTo requires an OAuth key to function.')
-    const json = await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+    // make request to /subscribe endpoint
+    const data = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${oauthkey}`,
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json'
         }
-    })).json()
+    })
+    // turn result into json
+    const json = await data.json()
+    // check for error, if there is no error return a mod, else return an APIError object (i'm not sure how to make a class that extends the normal error)
     if (!json.error) return new Mod(json);
     else return new APIError(json);
 }
 
 /**
- * 
- * @param {string} gameid 
- * @param {string} modid 
- * @param {string} rating 
- * @returns {Promise<Message>}
+ * Add a rating to a mod.
+ * @param {string} gameid Game for the mod.
+ * @param {string} modid Mod to add rating to.
+ * @param {string} rating Rating you want to give, -1, 0 or 1 (0 removes rating)
  */
 
 async function addRating(gameid, modid, rating) {
     if (!oauthkey) throw new Error('addRating requires an OAuth key to function.')
-    return new Message(await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/ratings?rating=${rating}`, {
+    // make request to /ratings with the input rating as a param
+    const data = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/ratings?rating=${rating}`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${oauthkey}`,
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json'
         }
-    })).json())
+    })
+    // turn result into json
+    const json = await data.json()
+    // return the message
+    return new Message(json)
 }
 
 /**
  * Unsubscribe from a mod. Needs OAuth key.
  * @param {string} gameid The game the mod is for.
  * @param {string} modid The mod you want to unsubscribe from.
- * @returns {Promise<Mod>}
  * 
  * Unsubscribes from a mod.
  */
@@ -316,7 +304,6 @@ async function unsubscribeFrom(gameid, modid) {
  * @param {string} modid Mod to get files from.
  * @param {function} customErrorHandler A custom error handler function, res and modfilesreq (res is request sent to v1/games/${gameid}/mods/${modid} and turned into json, modfilesreq is sent to /files and turned into json. Both will have an error property if the request fails. Order: customErrorHandler(gameid, modid, res, modfilesreq, firstCall). firstCall will be false.)
  * @param {boolean} firstCall This is for internal use. Setting this will very likely break the function if it has to retry.
- * @returns {Promise<Array<Modfile>>}
  * Array contains the mod's latest modfiles.
  */
 
@@ -331,11 +318,13 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
     const modfiles = [];
     const latest = [];
     // Make a request to the /files endpoint to get all files.
-    const modfilesreq = await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/files?api_key=${key}`, {
+    const mreq = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/files?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
-    })).json()
-    // Check if either of them errored, and retry twice
+    })
+    // Turn request into json
+    const modfilesreq = await mreq.json()
+    // Check if either of them errored, and retry twice if there is no custom error handler.
     if (!customErrorHandler && firstCall && (res.error || modfilesreq.error)) {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
@@ -351,6 +340,7 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
             }, 5000)
         })
     }
+    // If there is a custom error handler, call it.
     if (customErrorHandler && firstCall) {
         customErrorHandler(gameid, modid, res, modfilesreq, false);
     }
@@ -375,9 +365,7 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
  * @param {string} gameid Game to get mod from.
  * @param {string} modid Mod to get file from.
  * @param {string} platform Platform to get file for.
- * @returns {Promise<Modfile>}
  * Returns a Modfile class.
- * View example here: https://docs.mod.io/?javascript--nodejs#modfile-object
  * 
  */
 
@@ -385,6 +373,7 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
     // This is supposed to send a request to v1/games/{gameid}/mods/{modid}/files/{fileid} to get a specific file from the mod, but I don't know where to get the fileid from.
     const data = await getModfiles(gameid, modid);
     for (const modfile of data) {
+        // check if modfile.platforms exists
         if (modfile.platforms) {
             for (const plat of modfile.platforms) {
                 if (plat.platform == platform) {
@@ -393,12 +382,8 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
             }
         }
         else {
-            if (modfile.platforms && modfile.platforms.length > 0) for (const platform of modfile.platforms) {
-                if (platform.platform = platform) return modfile
-            }
-            else if (!modfile.platforms || modfile.platforms.length == 1) {
-                return modfile
-            }
+            // if modfile.platforms doesn't exist, return the modfile returned by getModfiles
+            return modfile
         }
     }
 }
@@ -406,23 +391,27 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
 /**
  * Get all mods the user is subscribed to.
  * 
- * @returns {Promise<Array<Mod>>}
- * 
  * Returns an array of Mods.
  */
 
 async function getSubscriptions() {
     if (!oauthkey) throw new Error("OAuth has to be set.")
+    // start using the oauth key if it hasn't already (will change later to remove useOAuthkey and useAPIKey, instead using headers custom-declared for each one)
     useOAuthkey();
+    // make request to /me/subscribed
     const req = await fetch('https://api.mod.io/v1/me/subscribed', {
         method: 'GET',
         headers: defaultHeaders
     })
+    // turn request into json
     const res = await req.json();
+    // make empty array
     const mods = [];
+    // go through each mod
     for (const mod of res.data) {
         mods.push(new Mod(mod));
     }
+    // return the array
     return mods
 }
 
@@ -433,7 +422,6 @@ async function getSubscriptions() {
  * @param {string} platform Platform to get file for.
  * @param {string} outputpath Where to put the file.
  * @param {boolean} useNameID To use the name ID in the link. This is to prevent mods with files that have the same names from overwriting eachother.
- * @return {Promise<void>}
  * 
  * Downloads a mod.
  */
@@ -442,14 +430,18 @@ async function getSubscriptions() {
     // This was supposed to send a request to v1/games/{gameid}/mods/{modid}/files/{fileid} to get a specific file from the mod, but I don't know where to get the fileid from while minimizing requests.
     const data = await getModfile(gameid, modid, platform);
     let name;
+    // if useNameID is true, set name to what's displayed after /m/ in the url. makes an extra request, and i'm not entirely sure how to make the Modfile object contain the binary_url aswell.
     if (useNameID) name = (await getMod(gameid, modid)).name_id + '.zip';
+    // if data doesn't contain the binary_url, return
     if (!data || !data.binary_url) return;
     const download = data.binary_url;
-    //console.log(download);
     let newoutput;
+    // if name hasn't been set to something, set it to the filename
     if (!name) name = data.filename;
+    // if outputpath does not with / or \\, add / and the name, else just add the name
     if (!outputpath.endsWith('/') && !outputpath.endsWith('\\')) newoutput = outputpath + '/' + name;
     else newoutput = outputpath + name;
+    // declare dl for internal use
     async function dl() {
         const res = await fetch(download, {
             method: 'GET'
@@ -466,6 +458,7 @@ async function getSubscriptions() {
             });
         })
     }
+    // if the output exists, compare md5 hashes to see if the one we're trying to download is newer, else just run dl()
     if (fs.existsSync(newoutput)) {
         // create md5 hash
         const hash = crypto.createHash('md5', {encoding: 'binary'});
@@ -474,8 +467,11 @@ async function getSubscriptions() {
         // update hash when stream emits data
         stream.on('data', (data) => hash.update(data));
         stream.on('end', async () => {
+            // get the hash of the modfile
             const modfilehash = data.md5;
+            // get the newly created hash
             const newhash = hash.digest('hex');
+            // compare the hashes, if they're the same don't run dl()
             if (modfilehash == newhash) return;
             else {
                 return await dl();
@@ -489,7 +485,6 @@ async function getSubscriptions() {
  * Gets the comments from a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get comments from.
- * @returns {Promise<Array<Comment>>}
  */
 
 async function getModComments(gameid, modid) {
@@ -498,6 +493,7 @@ async function getModComments(gameid, modid) {
         method: `GET`,
         headers: defaultHeaders
     });
+    // Turn request into json
     const res = await req.json();
     const comments = [];
     // Sort through resulting json to get all comments
@@ -506,6 +502,7 @@ async function getModComments(gameid, modid) {
             comments.push(new Comment(comment));
         }
     }
+    // Return comments array
     return comments;
 }
 
@@ -513,17 +510,18 @@ async function getModComments(gameid, modid) {
  * Gets dependencies for a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get dependencies for.
- * @returns {Promise<Dependencies>}
- * Object contains an array called data.
- * View example here: https://docs.mod.io/?javascript--nodejs#get-mod-dependencies-2
  */
 
 async function getModDependencies(gameid, modid) {
     // Send request to v1/games/{gameid}/mods/{modid}/dependencies to get mod dependencies.
-    return new Dependencies(await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/dependencies?api_key=${key}`, {
+    const data = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/dependencies?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
-    })).json());
+    })
+    // Turn result into json
+    const json = await data.json()
+    // Return dependencies object
+    return new Dependencies(json);
 }
 
 module.exports = {
@@ -538,7 +536,6 @@ module.exports = {
     getModDependencies,
     setAPIKey,
     setOAuthKey,
-    usingOAuth,
     useAPIKey,
     useOAuthkey,
     hasKey,
@@ -551,3 +548,6 @@ module.exports = {
     isUsingAPIKey,
     isUsingOAuth
 }
+
+// note to self, remember to change this later so functions related to starting to use the api key are gone, along with whether or not they're being used.
+// instead, replace them with whether or not they're set
