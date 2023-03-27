@@ -13,7 +13,6 @@ declare namespace modio {
     export function useAPIKey(): void;
     export function setAPIKey(apikey: string): void;
     export function setOAuthKey(oauth: string): void;
-    export function usingOAuth(): boolean;
     export function hasKey(): boolean;
     export function getGames(): Promise<Game[]>;
     export function getGame(id: string): Promise<Game>;
