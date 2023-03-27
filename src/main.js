@@ -7,6 +7,8 @@ const { Comment } = require('../lib/comment');
 const { Game } = require('../lib/game');
 const { Message, AccessTokenObject } = require('../lib/misc');
 const { APIError } = require('../lib/error');
+const { Dependencies } = require('../lib/dependency');
+const crypto = require('crypto');
 
 // No logins are included as of now, due to me not understanding them and lacking general knowledge of how to obtain the necessary tokens.
 // OAuth is supported, however you cannot obtain an OAuth token through something like the Email Exchange method, or logging in through any other platforms.
@@ -29,7 +31,7 @@ let defaultHeaders = {
  * @returns {Promise<Message>}
  */
 
-async function email_request(email) {
+async function emailRequest(email) {
     if (!key) throw new Error('email_request needs an API key.');
     return new Message(await (await fetch(`https://api.mod.io/v1/oauth/emailrequest?api_key=${key}&email=${email}`, {
         method: 'POST',
@@ -48,7 +50,7 @@ async function email_request(email) {
  * Access token is in property access_token.
  */
 
-async function email_exchange(code) {
+async function emailExchange(code) {
     if (!key) throw new Error('email_request needs an API key.')
     return new AccessTokenObject(await (await fetch(`https://api.mod.io/v1/oauth/emailexchange?api_key=${key}&security_code=${code}`, {
         method: 'POST',
@@ -190,7 +192,7 @@ async function getGame(id) {
 /**
  * Gets all the mods a game has.
  * @param {string} gameid ID of the game to get mods from.
- * @returns {Promise<Array<Game>>}
+ * @returns {Promise<Array<Mod>>}
  * 
  * Returns an array containing Mod classes.
  */
@@ -218,7 +220,7 @@ async function getMods(gameid) {
  * Gets a mod from a specific game.
  * @param {string} gameid The gameID to get the mod from.
  * @param {string} modid The ID of the mod to get.
- * @returns {Promise<Mod>}
+ * @returns {Promise<Mod | APIError>}
  * Returns a Mod class.
  */
 
@@ -233,6 +235,9 @@ async function getMod(gameid, modid) {
     // Check if it actually was able to get the mod
     if (res.id) {
         return new Mod(res);
+    }
+    else if (res.error) {
+        return new APIError(res)
     }
     else {
         throw new Error('Failed to get mod.')
@@ -271,8 +276,7 @@ async function subscribeTo(gameid, modid) {
  */
 
 async function addRating(gameid, modid, rating) {
-    if (rating != 1 && rating != -1 && rating != 0) throw new Error('Rating must be 1, -1 or 0.')
-    if (!isUsingOAuth) throw new Error('susbcribeTo requires an OAuth key to function.')
+    if (!oauthkey) throw new Error('addRating requires an OAuth key to function.')
     return new Message(await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/ratings?rating=${rating}`, {
         method: 'POST',
         headers: {
@@ -381,14 +385,19 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
     // This is supposed to send a request to v1/games/{gameid}/mods/{modid}/files/{fileid} to get a specific file from the mod, but I don't know where to get the fileid from.
     const data = await getModfiles(gameid, modid);
     for (const modfile of data) {
-        if (modfile.platform) {
-            if (modfile.platform == platform) {
-                return modfile;
+        if (modfile.platforms) {
+            for (const plat of modfile.platforms) {
+                if (plat.platform == platform) {
+                    return modfile;
+                }
             }
         }
         else {
-            for (const platform of modfile.platforms) {
+            if (modfile.platforms && modfile.platforms.length > 0) for (const platform of modfile.platforms) {
                 if (platform.platform = platform) return modfile
+            }
+            else if (!modfile.platforms || modfile.platforms.length == 1) {
+                return modfile
             }
         }
     }
@@ -426,7 +435,7 @@ async function getSubscriptions() {
  * @param {boolean} useNameID To use the name ID in the link. This is to prevent mods with files that have the same names from overwriting eachother.
  * @return {Promise<void>}
  * 
- * Downloads a mod from the website.
+ * Downloads a mod.
  */
 
  async function downloadMod(gameid, modid, platform, outputpath, useNameID) {
@@ -441,24 +450,39 @@ async function getSubscriptions() {
     if (!name) name = data.filename;
     if (!outputpath.endsWith('/') && !outputpath.endsWith('\\')) newoutput = outputpath + '/' + name;
     else newoutput = outputpath + name;
-    // Compare sizes to see if one file is newer (determined by size, not effective but it'll work while I learn how to work with the mod.io API.)
-    if (fs.existsSync(newoutput)) {
-        const oldsize = fs.statSync(newoutput).size;
-        const downloadsize = data.filesize;
-        if (downloadsize <= oldsize) return;
-    }
-    const res = await fetch(download, {
-        method: 'GET'
-    });
-    const newurl = res.url;
-    return new Promise((resolve, reject) => {
-        https.get(newurl, (res) => {
-            const stream = fs.createWriteStream(newoutput);
-            res.pipe(stream);
-            stream.on('finish', resolve);
-            stream.on('error', reject);
+    async function dl() {
+        const res = await fetch(download, {
+            method: 'GET'
         });
-    })
+        const newurl = res.url;
+        return new Promise((resolve, reject) => {
+            https.get(newurl, (res) => {
+                const stream = fs.createWriteStream(newoutput);
+                const pipe = res.pipe(stream);
+                stream.on('close', () => {
+                    if (pipe.closed && stream.closed) resolve()
+                });
+                stream.on('error', () => reject);
+            });
+        })
+    }
+    if (fs.existsSync(newoutput)) {
+        // create md5 hash
+        const hash = crypto.createHash('md5', {encoding: 'binary'});
+        // create read stream of existing file
+        const stream = fs.createReadStream(newoutput);
+        // update hash when stream emits data
+        stream.on('data', (data) => hash.update(data));
+        stream.on('end', async () => {
+            const modfilehash = data.md5;
+            const newhash = hash.digest('hex');
+            if (modfilehash == newhash) return;
+            else {
+                return await dl();
+            }
+        })
+    }
+    else await dl();
 }
 
 /**
@@ -489,17 +513,17 @@ async function getModComments(gameid, modid) {
  * Gets dependencies for a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get dependencies for.
- * @returns {Promise<Object>}
- * Object yet again contains an array called data.
+ * @returns {Promise<Dependencies>}
+ * Object contains an array called data.
  * View example here: https://docs.mod.io/?javascript--nodejs#get-mod-dependencies-2
  */
 
 async function getModDependencies(gameid, modid) {
     // Send request to v1/games/{gameid}/mods/{modid}/dependencies to get mod dependencies.
-    return await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/dependencies?api_key=${key}`, {
+    return new Dependencies(await (await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/dependencies?api_key=${key}`, {
         method: `GET`,
         headers: defaultHeaders
-    })).json()
+    })).json());
 }
 
 module.exports = {
@@ -521,8 +545,8 @@ module.exports = {
     subscribeTo,
     unsubscribeFrom,
     getSubscriptions,
-    email_request,
-    email_exchange,
+    emailRequest,
+    emailExchange,
     addRating,
     isUsingAPIKey,
     isUsingOAuth
