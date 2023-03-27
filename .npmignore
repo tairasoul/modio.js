@@ -1,1 +1,7 @@
 package-lock.json
+./node_modules
+./libsrc
+publish.js
+publish-both.js
+npmrc
+npmrcgit
