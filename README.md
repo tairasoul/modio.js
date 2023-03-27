@@ -117,3 +117,6 @@ All functions, other than getModDependencies, return a class.
 
 Add changelog.
 Fix function naming as mentioned in [issue 1](https://github.com/fheahdythdr/modio.js/issues/1)
+
+
+quick side note to any frequent github users, how do i publish to both npmjs and github at the same time without npm erroring?
