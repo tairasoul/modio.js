@@ -26,13 +26,13 @@ modio.setOAuthKey('your-oauth-key'); // Get an OAuth key at mod.io/apikey
 
 ```js
 // Api key is needed.
-const message = await modio.email_request('someperson@someservice.com');
+const message = await modio.emailRequest('someperson@someservice.com');
 
 // The user has to input the security code, so use whatever you use for getting user input.
 const code = (await inquirer.prompt({type: 'input', name: 'oauth', message: 'Input the OAuth key you got.'})).oauth;
 
 // Returns an Access Token class.
-const accesstoken = await modio.email_exchange(code);
+const accesstoken = await modio.emailExchange(code);
 ```
 
 ##### Downloading a mod
@@ -103,6 +103,17 @@ const subscribed = await modio.subscribeTo('@game', '@mod');
 const unsubscribed = await modio.unsubscribeFrom('@game', '@mod');
 ```
 
+##### Adding a rating to a mod
+
+```js
+const message = await modio.addRating('@game', '@mod', rating) // Rating can be -1, 0 or 1. -1 is negative, 0 removes previous rating and 1 is positive.
+```
+
 ## Extra info
 
 All functions, other than getModDependencies, return a class.
+
+## Changelog
+
+Add changelog.
+Fix function naming as mentioned in [issue 1](https://github.com/fheahdythdr/modio.js/issues/1)
