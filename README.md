@@ -109,9 +109,18 @@ const unsubscribed = await modio.unsubscribeFrom('@game', '@mod');
 const message = await modio.addRating('@game', '@mod', rating) // Rating can be -1, 0 or 1. -1 is negative, 0 removes previous rating and 1 is positive.
 ```
 
+##### Parsing a URL into game and mod
+
+```js
+const parsedUrl = modio.parseUrl('https://mod.io/g/bonelab/m/m60') // Parses url into an object containing game and mod. These are the @game and @mod params you need for most other functions.
+```
+
 ## Exposed variables
 
-Exposed variables are isUsingAPIKey and isUsingOAuth. Use these to see whether or not APIKey or OAuth are being used.
+Exposed variables are:
+exposedInfo
+
+exposedInfo contains booleans for whether or not both types of keys have been set.
 
 ## Extra info
 
