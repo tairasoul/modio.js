@@ -9,11 +9,8 @@ import { Dependencies } from '../lib/dependency';
 declare namespace modio {
     export function emailRequest(email: string): Promise<Message>;
     export function emailExchange(code: string): Promise<AccessTokenObject>;
-    export function useOAuthKey(): void;
-    export function useAPIKey(): void;
     export function setAPIKey(apikey: string): void;
     export function setOAuthKey(oauth: string): void;
-    export function hasKey(): boolean;
     export function getGames(): Promise<Game[]>;
     export function getGame(id: string): Promise<Game>;
     export function getMods(gameid: string): Promise<Mod[]>;
@@ -27,8 +24,11 @@ declare namespace modio {
     export function downloadMod(gameid: string, modid: string, platform: string, outputpath: string, useNameID: boolean): Promise<void>;
     export function getModComments(gameid: string, modid: string): Promise<Comment[]>;
     export function getModDependencies(gameid: string, modid: string): Promise<Dependencies>;
-    export var isUsingAPIKey: boolean;
-    export var isUsingOAuthKey: boolean;
+    export function parseUrl(url: string): {mod: string, game: string};
+    export var exposedInfo: {
+        hasKey: boolean,
+        hasOAuth: boolean
+    }
 }
 
 export = modio;
