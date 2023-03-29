@@ -128,5 +128,5 @@ All functions, other than getModDependencies, return a class.
 
 ## Changelog
 
-Remove unnecessary functions, when I'm already exposing the variables they're checking.
-Add more comments to source.
+Remove exposed variables, add one exposed object.
+Add new function for parsing urls.
