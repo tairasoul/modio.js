@@ -112,7 +112,9 @@ const message = await modio.addRating('@game', '@mod', rating) // Rating can be 
 ##### Parsing a URL into game and mod
 
 ```js
-const parsedUrl = modio.parseUrl('https://mod.io/g/bonelab/m/m60') // Parses url into an object containing game and mod. These are the @game and @mod params you need for most other functions.
+const parsedUrl = modio.parseUrl('https://mod.io/g/bonelab/m/m60'); // Parses url into an object containing game and mod. These are the @game and @mod params you need for most other functions.
+const game = parsedUrl.game;
+const mod = parsedUrl.mod;
 ```
 
 ## Exposed variables
@@ -124,7 +126,7 @@ exposedInfo contains booleans for whether or not both types of keys have been se
 
 ## Extra info
 
-All functions, other than getModDependencies, return a class.
+No extra info as of now.
 
 ## Changelog
 
