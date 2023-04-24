@@ -16,6 +16,9 @@ add report submitting
 add agreement functions (getting agreement, getting specific version)
 add mute and unmute user functions
 add the rest of the Me part of the docs (https://docs.mod.io/?javascript--nodejs#get-authenticated-user)
+
+-- working on --
+
 add guide related functions
 
 -- finished --
