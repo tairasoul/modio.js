@@ -88,14 +88,6 @@ const comments = await modio.getModComments(game ,mod);
 ```js
 const dependencies = await modio.getModDependencies(game, mod);
 ```
-
-##### Parsing a URL into game and mod
-
-```js
-const parsedUrl = modio.parseUrl('https://mod.io/g/bonelab/m/m60'); // Parses url into an object containing game and mod. These are the @game and @mod params you need for most other functions.
-const game = parsedUrl.game;
-const mod = parsedUrl.mod;
-```
 ## OAuth is needed for the following functions.
 
 ##### Getting all subscribed mods
@@ -117,6 +109,14 @@ const unsubscribed = await modio.unsubscribeFrom('@game', '@mod');
 const message = await modio.addRating('@game', '@mod', rating) // Rating can be -1, 0 or 1. -1 is negative, 0 removes previous rating and 1 is positive.
 ```
 
+##### Parsing a URL into game and mod
+
+```js
+const parsedUrl = modio.parseUrl('https://mod.io/g/bonelab/m/m60'); // Parses url into an object containing game and mod. These are the @game and @mod params you need for most other functions.
+const game = parsedUrl.game;
+const mod = parsedUrl.mod;
+```
+
 ## Exposed variables
 
 Exposed variables are:
@@ -126,9 +126,8 @@ exposedInfo contains booleans for whether or not both types of keys have been se
 
 ## Extra info
 
-No extra info as of now.
+You'll likely be able to see newer versions on Github, as it's easier for me to update singular files there.
 
 ## Changelog
 
-Remove exposed variables, add one exposed object.
-Add new function for parsing urls.
+Minor fix on getModfiles
