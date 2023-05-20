@@ -23,7 +23,7 @@ declare namespace modio {
     export function getSubscriptions(): Promise<Array<Mod>>;
     export function downloadMod(gameid: string, modid: string, platform: string, outputpath: string, useNameID: boolean): Promise<void>;
     export function getModComments(gameid: string, modid: string): Promise<Comment[]>;
-    export function getModDependencies(gameid: string, modid: string): Promise<Dependencies>;
+    export function getModDependencies(gameid: string, modid: string, recursive: boolean): Promise<Dependencies>;
     export function parseUrl(url: string): {mod: string, game: string};
     export var exposedInfo: {
         hasKey: boolean,

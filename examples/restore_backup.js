@@ -36,4 +36,4 @@
             await modio.subscribeTo(`@${game}`, `@${modimport}`);
         }, 1000)
     }
-})
+})();

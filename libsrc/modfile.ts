@@ -51,7 +51,6 @@ export class Modfile {
         }
     }
     async downloadFile(path: string) {
-        
         return new Promise((resolve, reject) => {
             httpGet(this.binary_url, (incoming) => {
                 const stream = write(path)

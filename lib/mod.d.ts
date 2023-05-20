@@ -37,4 +37,13 @@ export declare class Mod {
     ratings_negative: number;
     ratings_display_text: string;
     constructor(tbl: any);
+    getModfiles(): Promise<Modfile[]>;
+    /**
+     *  Download the mod's latest modfile for a specified platform.
+     * @param {string} outputDir The directory to output the modfile.
+     * @param {'windows' | 'android' | string} platform The platform to download the modfile for.
+     * @returns {string} The path to the output file.
+     * @description Returns the output file. Uses the name shown in the URL after /m/.
+     */
+    download(outputDir: string, platform: 'windows' | 'android' | string): Promise<string>;
 }

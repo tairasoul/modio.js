@@ -1,5 +1,4 @@
 const fs = require(`fs`);
-const fetch = require(`node-fetch`);
 const https = require('https');
 const { Mod } = require('../lib/mod');
 const { Modfile } = require('../lib/modfile');
@@ -24,6 +23,27 @@ const exposedInfo = {
     hasOAuth: false
 }
 
+/**
+ * 
+ * @param {string} endpoint Endpoint to make a request to.
+ * @param {string} extraArgs Extra arguments to provide.
+ * @param {*} fetchargs Args to send into fetch.
+ */
+
+function apiRequest(endpoint, extraArgs, fetchargs) {
+    if (!endpoint.startsWith("/")) endpoint = `/${endpoint}`;
+    if (fetchargs) {
+        return fetch(`https://api.mod.io/v1${endpoint}?api_key=${internalInfo.key}&${extraArgs}`, fetchargs)
+    }
+    return fetch(`https://api.mod.io/v1${endpoint}?api_key=${internalInfo.key}&${extraArgs}`, {
+        method: `GET`,
+        headers: {
+            "Accept": 'application/json',
+            'Authorization': `Bearer ${internalInfo.oauthkey}`
+        }
+    })
+}
+
 // The OAuth and API key functions can probably still be improved.
 
 /**
@@ -33,13 +53,9 @@ const exposedInfo = {
 
 async function emailRequest(email) {
     if (!mainInfo.key) throw new Error('email_request needs an API key.');
-    return new Message(await (await fetch(`https://api.mod.io/v1/oauth/emailrequest?api_key=${internalInfo.key}&email=${email}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-        }
-    })).json())
+    const data = await apiRequest("/oauth/emailrequest", "email=" + email);
+    const json = await data.json()
+    return new Message(json);
 }
 
 /**
@@ -49,20 +65,10 @@ async function emailRequest(email) {
 
 async function emailExchange(code) {
     if (!internalInfo.key) throw new Error('email_request needs an API key.')
-    return new AccessTokenObject(await (await fetch(`https://api.mod.io/v1/oauth/emailexchange?api_key=${internalInfo.key}&security_code=${code}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-        }
-    })).json())
+    const data = await apiRequest('/oauth/emailexchange', `security_code=${code}`)
+    const json = await data.json()
+    return new AccessTokenObject(json)
 }
-
-/**
- * Start using OAuth key.
- * 
- * Throws an error if the Oauth key hasn't been set.
- */
 
 /**
  * Set API key.
@@ -93,13 +99,7 @@ function setOAuthKey(oauth) {
 
 async function getGames() {
     // Send request to /v1/games endpoint to get all games.
-    const req = await fetch(`https://api.mod.io/v1/games?api_key=${internalInfo.key}`, {
-        method: `GET`,
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    })
+    const req = await apiRequest('/games')
     // Parse request into JSON object
     const games = await req.json();
     const gamearray = [];
@@ -118,13 +118,7 @@ async function getGames() {
 
 async function getGame(id) {
     // Send request to /v1/games endpoint with game ID, parse response and pass parsed response into a new Game class.
-    const data = await fetch(`https://api.mod.io/v1/games/${id}?api_key=${internalInfo.key}`, {
-        method: `GET`,
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    })
+    const data = await apiRequest(`/games/${id}`)
     // Turn data into json
     const json = await data.json()
     // Return game object
@@ -139,13 +133,7 @@ async function getGame(id) {
 
 async function getMods(gameid) {
     // Send request to v1/games/{gameid}/mods with game ID to get mods for that game.
-    const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods?api_key=${internalInfo.key}`, {
-        method: `GET`,
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    });
+    const req = await apiRequest(`/games/${gameid}/mods`)
     // Parse request into JSON object
     const res = await req.json();
     const mods = []
@@ -168,13 +156,7 @@ async function getMods(gameid) {
 
 async function getMod(gameid, modid) {
     // Send request to v1/games/{gameid}/mods/{modid} to get info about the mod.
-    const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}?api_key=${internalInfo.key}`, {
-        method: `GET`,
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    });
+    const req = await apiRequest(`/games/${gameid}/mods/${modid}`);
     // Turn request into JSON
     const res = await req.json();
     // Check if it actually was able to get the mod
@@ -200,14 +182,7 @@ async function getMod(gameid, modid) {
 async function subscribeTo(gameid, modid) {
     if (!internalInfo.oauthkey) throw new Error('susbcribeTo requires an OAuth key to function.')
     // make request to /subscribe endpoint
-    const data = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${internalInfo.oauthkey}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-        }
-    })
+    const data = await apiRequest(`/games/${gameid}/mods/${modid}/subscribe`)
     // turn result into json
     const json = await data.json()
     // check for error, if there is no error return a mod, else return an APIError object (i'm not sure how to make a class that extends the normal error)
@@ -225,14 +200,7 @@ async function subscribeTo(gameid, modid) {
 async function addRating(gameid, modid, rating) {
     if (!internalInfo.oauthkey) throw new Error('addRating requires an OAuth key to function.')
     // make request to /ratings with the input rating as a param
-    const data = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/ratings?rating=${rating}`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${internalInfo.oauthkey}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-        }
-    })
+    const data = await apiRequest(`/games/${gameid}/mods/${modid}/ratings?rating=${rating}`)
     // turn result into json
     const json = await data.json()
     // return the message
@@ -247,7 +215,7 @@ async function addRating(gameid, modid, rating) {
 
 async function unsubscribeFrom(gameid, modid) {
     if (internalInfo.oauthkey) throw new Error('unsubscribeFrom requires an OAuth key to function.')
-    return await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/subscribe`, {
+    return await apiRequest(`/games/${gameid}/mods/${modid}/subscribe`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${internalInfo.oauthkey}`,
@@ -269,29 +237,18 @@ async function unsubscribeFrom(gameid, modid) {
 
 async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) {
     // Get the mod, in order to get the latest live modfiles.
-    const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}?api_key=${internalInfo.key}`, {
-        method: `GET`,
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    })
+    const req = await apiRequest(`/games/${gameid}/mods/${modid}`)
     // Turn the request into a JSON object.
     const res = await req.json();
     const modfiles = [];
     const latest = [];
     // Make a request to the /files endpoint to get all files.
-    const mreq = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/files?api_key=${internalInfo.key}`, {
-        method: `GET`,
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    })
-    // Turn request into json
+    const mreq = await apiRequest(`/games/${gameid}/mods/${modid}/files`)
     const modfilesreq = await mreq.json()
+
     // Check if either of them errored, and retry twice if there is no custom error handler.
     if (!customErrorHandler && firstCall && (res.error || modfilesreq.error)) {
+        console.log('hi5');
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 getModfiles(gameid, modid, false).then(resolve).catch(() => {
@@ -362,13 +319,7 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
 async function getSubscriptions() {
     if (!internalInfo.oauthkey) throw new Error("OAuth has to be set.")
     // make request to /me/subscribed
-    const req = await fetch('https://api.mod.io/v1/me/subscribed', {
-        method: 'GET',
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    })
+    const req = await apiRequest('/me/subscribed')
     // turn request into json
     const res = await req.json();
     // make empty array
@@ -416,7 +367,8 @@ async function getSubscriptions() {
                 const stream = fs.createWriteStream(newoutput);
                 const pipe = res.pipe(stream);
                 stream.on('close', () => {
-                    if (pipe.closed && stream.closed) resolve()
+                    if (pipe.closed) resolve()
+                    else pipe.on('close', resolve)
                 });
                 stream.on('error', () => reject);
             });
@@ -453,13 +405,7 @@ async function getSubscriptions() {
 
 async function getModComments(gameid, modid) {
     // Send request to v1/games/{gameid}/mods/{modid}/comments to get comments from the mod.
-    const req = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/comments?api_key=${internalInfo.key}`, {
-        method: `GET`,
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    });
+    const req = await apiRequest(`/games/${gameid}/mods/${modid}/comments`);
     // Turn request into json
     const res = await req.json();
     const comments = [];
@@ -477,17 +423,12 @@ async function getModComments(gameid, modid) {
  * Gets dependencies for a mod.
  * @param gameid Game to get mod from.
  * @param modid Mod to get dependencies for.
+ * @param recursive Get sub-dependencies.
  */
 
-async function getModDependencies(gameid, modid) {
+async function getModDependencies(gameid, modid, recursive = false) {
     // Send request to v1/games/{gameid}/mods/{modid}/dependencies to get mod dependencies.
-    const data = await fetch(`https://api.mod.io/v1/games/${gameid}/mods/${modid}/dependencies?api_key=${internalInfo.key}`, {
-        method: `GET`,
-        headers: {
-            "Accept": 'application/json',
-            'Authorization': `Bearer ${internalInfo.oauthkey}`
-        }
-    })
+    const data = await apiRequest(`/games/${gameid}/mods/${modid}/dependencies`, `recursive=${recursive}`)
     // Turn result into json
     const json = await data.json()
     // Return dependencies class
@@ -496,18 +437,33 @@ async function getModDependencies(gameid, modid) {
 
 /**
  * Parse a URL into it's mod and game.
- * @param {string} url The URL to parse, ex. https://mod.io/g/bonelab/m/m60. Gets resolved into {game: '@game', mod: '@mod'}.
+ * @param {string} url The URL to parse, ex. https://mod.io/g/bonelab/m/m60. Gets resolved into {game: 'game', mod: 'mod'}.
  */
 
 function parseUrl(url) {
-    const mod = '@' + url.split('/m/')[1];
-    const game = '@' + url.split('/g/')[1].split('/m/')[0];
+    const mod = url.split('/m/')[1];
+    const game = url.split('/g/')[1].split('/m/')[0];
     return {
         mod: mod,
         game: game
     }
 }
 
+/**
+ * Get comments on a guide.
+ * @param {string} gameid Game id the guide is on.
+ * @param {string} guideid The guide id.
+ */
+
+async function getGuideComments(gameid, guideid) {
+    const data = await apiRequest(`/games/${gameid}/guides/${guideid}/comments`);
+    const json = await data.json();
+    const comments = [];
+    for (const comment of json.data) {
+        comments.push(new Comment(comment));
+    }
+    return comments
+}
 // export everything and expose the mainInfo var
 
 module.exports = {
@@ -529,5 +485,6 @@ module.exports = {
     emailExchange,
     addRating,
     parseUrl,
+    getGuideComments,
     exposedInfo
 }

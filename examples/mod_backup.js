@@ -29,7 +29,7 @@
         }, 1000)
     }
     const data = fs.readFileSync(__dirname + '/modimport.txt');
-    // Originally made for DRG mod syncing, feel free to adapt if needed.
+    // Originally made for DRG mod syncing using Better Modding Menu, feel free to adapt for your game if needed.
     const imports = data.replace(/\nDisabled:.*/s, '').replace('Enabled:\n', '');
     for (const first of imports.split(': ')) {
         for (const mod of first.split('\n')) {
@@ -40,4 +40,4 @@
             }, 1000)
         }
     }
-})
+})();

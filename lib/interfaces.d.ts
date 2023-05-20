@@ -1,3 +1,4 @@
+import { Modfile } from "./modfile";
 export interface avatar {
     filename: string;
     original: string;
@@ -67,4 +68,12 @@ export interface platform {
     label: string;
     moderated: boolean;
     status: number;
+}
+export interface dependency {
+    mod_id: number;
+    name: string;
+    date_added: string;
+    name_id: string;
+    dependency_depth: number;
+    modfile: Modfile;
 }

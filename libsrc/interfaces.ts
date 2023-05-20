@@ -78,3 +78,9 @@ export interface platform {
     moderated: boolean;
     status: number;
 }
+
+export interface dependency {
+    mod_id: number;
+    name: string;
+    date_added: string;
+}
