@@ -10,7 +10,7 @@ const { Dependencies } = require('../lib/dependency');
 const crypto = require('crypto');
 
 // No logins are included as of now, due to me not understanding them and lacking general knowledge of how to obtain the necessary tokens.
-// OAuth is supported, however you cannot obtain an OAuth token through something like the Email Exchange method, or logging in through any other platforms.
+// OAuth is supported with Email Exchange or the user providing it manually, however no other methods are supported.
 // The user must supply the API key or OAuth token.
 
 const internalInfo = {
@@ -31,10 +31,13 @@ const exposedInfo = {
  */
 
 function apiRequest(endpoint, extraArgs, fetchargs) {
+    // if endpoint doesn't start with /, add a / to the beginning
     if (!endpoint.startsWith("/")) endpoint = `/${endpoint}`;
     if (fetchargs) {
+        // if fetchargs exists, make a request with the args
         return fetch(`https://api.mod.io/v1${endpoint}?api_key=${internalInfo.key}&${extraArgs}`, fetchargs)
     }
+    // if fetchargs doesn't exist, make a default fetch with base GET headers
     return fetch(`https://api.mod.io/v1${endpoint}?api_key=${internalInfo.key}&${extraArgs}`, {
         method: `GET`,
         headers: {
@@ -52,9 +55,13 @@ function apiRequest(endpoint, extraArgs, fetchargs) {
  */
 
 async function emailRequest(email) {
-    if (!mainInfo.key) throw new Error('email_request needs an API key.');
+    // if internalInfo doesn't have a key, throw an error
+    if (!internalInfo.key) throw new Error('email_request needs an API key.');
+    // make an api request to /oauth/emailrequest endpoint with email=email args
     const data = await apiRequest("/oauth/emailrequest", "email=" + email);
-    const json = await data.json()
+    // turn that into json
+    const json = await data.json();
+    // return a new message
     return new Message(json);
 }
 
@@ -64,9 +71,13 @@ async function emailRequest(email) {
  */
 
 async function emailExchange(code) {
+    // if internalInfo doesn't have a key, throw an error
     if (!internalInfo.key) throw new Error('email_request needs an API key.')
+     // make an api request to /oauth/emailexchange endpoint with security_code=code args
     const data = await apiRequest('/oauth/emailexchange', `security_code=${code}`)
+    // turn that into json
     const json = await data.json()
+    // return an AccessTokenObject
     return new AccessTokenObject(json)
 }
 
@@ -245,27 +256,28 @@ async function getModfiles(gameid, modid, customErrorHandler, firstCall = true) 
     // Make a request to the /files endpoint to get all files.
     const mreq = await apiRequest(`/games/${gameid}/mods/${modid}/files`)
     const modfilesreq = await mreq.json()
-
-    // Check if either of them errored, and retry twice if there is no custom error handler.
-    if (!customErrorHandler && firstCall && (res.error || modfilesreq.error)) {
-        console.log('hi5');
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                getModfiles(gameid, modid, false).then(resolve).catch(() => {
-                    return new Promise((resolve) => {
-                        setTimeout(() => {
-                            getModfiles(gameid, modid, false).then(resolve).catch((error) => {
-                                reject('Failed to get modfiles. Error returned: ' + error)
-                            })
-                        }, 5000)
+    
+    if (firstCall) {
+        // Check if either of them errored, and retry twice if there is no custom error handler.
+        if (!customErrorHandler && (res.error || modfilesreq.error)) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    getModfiles(gameid, modid, false).then(resolve).catch(() => {
+                        return new Promise((resolve) => {
+                            setTimeout(() => {
+                                getModfiles(gameid, modid, false).then(resolve).catch((error) => {
+                                    reject('Failed to get modfiles. Error returned: ' + error)
+                                })
+                            }, 5000)
+                        })
                     })
-                })
-            }, 5000)
-        })
-    }
-    // If there is a custom error handler, call it.
-    if (customErrorHandler && firstCall) {
-        customErrorHandler(gameid, modid, res, modfilesreq, false);
+                }, 5000)
+            })
+        }
+        // If there is a custom error handler, call it.
+        if (customErrorHandler) {
+            customErrorHandler(gameid, modid, res, modfilesreq, false);
+        }
     }
     // Add both mod ID's to the latest array.
     if (!res.modfile || !res.modfile.id) { 
@@ -358,18 +370,25 @@ async function getSubscriptions() {
     else newoutput = outputpath + name;
     // declare dl for internal use
     async function dl() {
+        // fetch the url to get the redirect URL
         const res = await fetch(download, {
             method: 'GET'
         });
+        // store redirect url
         const newurl = res.url;
         return new Promise((resolve, reject) => {
+            // get the redirect url
             https.get(newurl, (res) => {
+                // create a stream to the new output
                 const stream = fs.createWriteStream(newoutput);
+                // pipe the resulting data from the redirect url to the write stream
                 const pipe = res.pipe(stream);
+                // when stream closes, if pipe is also closed resolve, otherwise resolve when pipe is closed
                 stream.on('close', () => {
                     if (pipe.closed) resolve()
                     else pipe.on('close', resolve)
                 });
+                // catch errors
                 stream.on('error', () => reject);
             });
         })
@@ -448,22 +467,6 @@ function parseUrl(url) {
         game: game
     }
 }
-
-/**
- * Get comments on a guide.
- * @param {string} gameid Game id the guide is on.
- * @param {string} guideid The guide id.
- */
-
-async function getGuideComments(gameid, guideid) {
-    const data = await apiRequest(`/games/${gameid}/guides/${guideid}/comments`);
-    const json = await data.json();
-    const comments = [];
-    for (const comment of json.data) {
-        comments.push(new Comment(comment));
-    }
-    return comments
-}
 // export everything and expose the mainInfo var
 
 module.exports = {
@@ -485,6 +488,5 @@ module.exports = {
     emailExchange,
     addRating,
     parseUrl,
-    getGuideComments,
     exposedInfo
 }
