@@ -112,9 +112,9 @@ const message = await modio.addRating('@game', '@mod', rating) // Rating can be 
 ##### Parsing a URL into game and mod
 
 ```js
-const parsedUrl = modio.parseUrl('https://mod.io/g/bonelab/m/m60'); // Parses url into an object containing game and mod. These are the @game and @mod params you need for most other functions.
-const game = parsedUrl.game;
-const mod = parsedUrl.mod;
+const parsedUrl = modio.parseUrl('https://mod.io/g/bonelab/m/m60'); // Parses url into an object containing game and mod. These are the game and mod params you need for most other functions.
+const game = parsedUrl.game; // bonelab
+const mod = parsedUrl.mod; // m60
 ```
 
 ## Exposed variables
@@ -130,4 +130,4 @@ You'll likely be able to see newer versions on Github, as it's easier for me to 
 
 ## Changelog
 
-Minor fix on getModfiles
+Fix emailExchange checking the wrong variable
