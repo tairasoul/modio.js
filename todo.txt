@@ -19,6 +19,7 @@ add the rest of the Me part of the docs (https://docs.mod.io/?javascript--nodejs
 
 -- working on --
 
+rewrite with current knowledge and coding tactics
 add guide related functions
 
 -- finished --
