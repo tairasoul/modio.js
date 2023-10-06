@@ -1,59 +1,32 @@
 import fs from "fs";
 import https from "https";
-import { apiRequest } from "./lib/request";
-import * as classes from "./lib/classes";
-import * as interfaces from "./lib/interfaces"
+import { apiRequest } from "./lib/request.js";
+import * as classes from "./lib/classes.js";
+import * as interfaces from "./lib/interfaces.js"
 
 export class ModioClient {
     private OAuth: string;
     private APIKey: string;
     private useTestEnvironment: boolean;
-    // preferOauth
-    private pOAuth: boolean = false;
-    // preferAPI
-    private pAPI: boolean = true;
-    private noPreferences: boolean = false;
-    private apiPath: string;
 
-    constructor(apiPath: string, testEnv: boolean = false) {
+    constructor(testEnv: boolean = false) {
         this.useTestEnvironment = testEnv;
-        this.apiPath = apiPath;
     }
 
     /**
-     * Should ModioClient prefer OAuth for requests that can be done by an API key?
+     * Set API key for this instance.
      */
 
-    preferOAuth() {
-        this.enablePreferences();
-        if (this.pAPI) this.pAPI = false;
-        this.pOAuth = true;
+    setApiAuth(auth: string) {
+        this.APIKey = auth;
     }
 
     /**
-     * Should ModioClient prefer the API key for non-OAuth requests?
+     * Set OAuth token for this instance.
      */
 
-    preferAPI() {
-        this.enablePreferences();
-        if (this.pOAuth) this.pOAuth = false;
-        this.pAPI = true;
-    }
-
-    /** 
-     * Disable key preferences.
-     */
-
-    disablePreferences() {
-        this.noPreferences = true;
-    }
-
-    /**
-     * Enable preferring OAuth/API key.
-     */
-
-    enablePreferences() {
-        this.noPreferences = false;
+    setOAuthToken(token: string) {
+        this.OAuth = token;
     }
 
     /**
@@ -61,8 +34,8 @@ export class ModioClient {
      */
 
     async emailRequest(email: string) {
-        if (this.APIKey == undefined) throw new Error("ModioClient does not have an API key!")
-        const data = await apiRequest(this.apiPath, `/oauth/emailrequest?api_key=${this.APIKey}&email=${email}`, {
+        if (this.APIKey == undefined) throw new Error("client.emailRequest() requires an API key.")
+        const data = await apiRequest(`/oauth/emailrequest?api_key=${this.APIKey}&email=${email}`, {
             method: "GET",
             headers: {
                 "Accept": "application/json"
@@ -72,7 +45,7 @@ export class ModioClient {
             const error: interfaces.Error = data;
             return error;
         }
-        return new classes.emailRequest(data.message, data.code, this.APIKey, this.apiPath, this.useTestEnvironment);
+        return new classes.emailRequest(data.message, data.code, this.APIKey, this.useTestEnvironment);
     }
 
     /**
@@ -80,8 +53,8 @@ export class ModioClient {
      */
 
     async logout() {
-        if (this.OAuth == undefined) throw new Error("ModioClient does not have an OAuth key!");
-        const data: interfaces.Message | interfaces.Error = await apiRequest(this.apiPath, `/oauth/logout`, {
+        if (this.OAuth == undefined) throw new Error("client.logout() requires an OAuth key.");
+        const data: interfaces.Message | interfaces.Error = await apiRequest(`/oauth/logout`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${this.OAuth}`,
@@ -96,10 +69,10 @@ export class ModioClient {
      * Get all games on mod.io.
      */
 
-    async getGames() {
-        if (this.OAuth == undefined && this.APIKey == undefined) throw new Error("ModioClient does not have an OAuth or API key!");
-        let headers;
-        if (this.pOAuth && this.OAuth != undefined) {
+    async getGames(useOAuth: boolean = false) {
+        if (this.OAuth == undefined && this.APIKey == undefined) throw new Error("client.getGames() requires an API key or an OAuth key.");
+        let headers: RequestInit | undefined;
+        if (useOAuth && this.OAuth != undefined) {
             headers = {
                 method: "GET",
                 headers: {
@@ -109,7 +82,7 @@ export class ModioClient {
             }
         }
 
-        if ((this.pAPI || this.noPreferences) && this.APIKey != undefined) {
+        if (this.APIKey != undefined && !useOAuth) {
             headers = {
                 method: "GET",
                 headers: {
@@ -118,7 +91,7 @@ export class ModioClient {
             }
         }
 
-        const data = await apiRequest(this.apiPath, `/games${((this.pAPI || this.noPreferences) && this.APIKey != undefined) ? `?api_key=${this.APIKey}` : ""}`, headers, this.useTestEnvironment);
+        const data = await apiRequest(`/games${(!useOAuth && this.APIKey != undefined) ? `?api_key=${this.APIKey}` : ""}`, headers, this.useTestEnvironment);
         if ('error' in data) {
             const error: interfaces.Error = data;
             return error;
@@ -131,7 +104,7 @@ export class ModioClient {
             result_total: data.result_total
         }
         for (const game of data.data) {
-            newData.data.push(new classes.Game({OAuth: this.OAuth, API: this.APIKey, testEnv: this.useTestEnvironment, apiPath: this.apiPath}, game));
+            newData.data.push(new classes.Game({OAuth: this.OAuth, API: this.APIKey, testEnv: this.useTestEnvironment}, game));
         }
         return newData;
     }
@@ -140,10 +113,10 @@ export class ModioClient {
      * Get a specific game. Must use an ID returned within a game object.
      */
 
-    async getGame(id: number) {
-        if (this.OAuth == undefined && this.APIKey == undefined) throw new Error("ModioClient does not have an OAuth or API key!");
+    async getGame(id: number, useOAuth: boolean = false) {
+        if (this.OAuth == undefined && this.APIKey == undefined) throw new Error("client.getGame() requires an API key or an OAuth key.");
         let headers;
-        if (this.pOAuth && this.OAuth != undefined) {
+        if (useOAuth && this.OAuth != undefined) {
             headers = {
                 method: "GET",
                 headers: {
@@ -153,7 +126,7 @@ export class ModioClient {
             }
         }
 
-        if ((this.pAPI || this.noPreferences) && this.APIKey != undefined) {
+        if ((!useOAuth) && this.APIKey != undefined) {
             headers = {
                 method: "GET",
                 headers: {
@@ -161,12 +134,12 @@ export class ModioClient {
                 }
             }
         }
-        const data = await apiRequest(this.apiPath, `/games/${id}${((this.pAPI || this.noPreferences) && this.APIKey != undefined) ? `?api_key=${this.APIKey}` : ""}`, headers, this.useTestEnvironment);
+        const data = await apiRequest(`/games/${id}${(!useOAuth && this.APIKey != undefined) ? `?api_key=${this.APIKey}` : ""}`, headers, this.useTestEnvironment);
         if ('error' in data) {
             const error: interfaces.Error = data;
             return error;
         }
-        const parsed = new classes.Game({OAuth: this.OAuth, API: this.APIKey, testEnv: this.useTestEnvironment, apiPath: this.apiPath}, data);
+        const parsed = new classes.Game({OAuth: this.OAuth, API: this.APIKey, testEnv: this.useTestEnvironment}, data);
         return parsed;    
     }
 }
