@@ -1,4 +1,4 @@
-import * as classes from "./classes";
+import * as classes from "./classes.js";
 
 export interface Avatar {
     /**
@@ -1116,4 +1116,27 @@ export interface ModInfo {
      * Contains mod tag data.
      */
     tags: ModTagObject[];
+}
+
+export interface getMods {
+    /**
+     * Array containing mod objects.
+     */
+    data: classes.Mod[];
+    /**
+     * Number of results returned in this request.
+     */
+    result_count: number;
+    /**
+     * Number of results skipped over. Defaults to 0 unless overridden by _offset filter.
+     */
+    result_offset: number;
+    /**
+     * Maximum number of results returned in the request. Defaults to 100 (max) unless overridden by _limit filter.
+     */
+    result_limit: number;
+    /**
+     * Total number of results found.
+     */
+    result_total: number;
 }
