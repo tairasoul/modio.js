@@ -1,30 +1,30 @@
 {
-    "name": "modio.js",
-    "version": "1.0.9a",
-    "description": "A nodejs library to interact with mod.io API. Very unfinished.",
-    "main": "src/main.js",
-    "engines": {
-        "node": ">=18.0.0"
-    },
-    "scripts": {},
-    "keywords": [
-        "modio",
-        "nodejs",
-        "library",
-        "api"
-    ],
-    "author": "fheahdythdr",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/fheahdythdr/modio-js/issues"
-    },
-    "homepage": "https://github.com/fheahdythdr/modio-js/",
-    "dependencies": {
-        "@types/node": "^18.15.0",
-        "fs": "^0.0.1-security",
-        "https": "^1.0.0",
-        "node-fetch": "2.6.9",
-        "whatwg-url": "^5.0.0"
-    },
-    "release": {}
-}
+        "name": "modio.js",
+        "version": "2.0.0",
+        "description": "A nodejs library to interact with mod.io API. Very unfinished.",
+        "main": "dist/modio.client.js",
+        "engines": {
+            "node": ">=18.0.0"
+        },
+        "keywords": [
+            "modio",
+            "nodejs",
+            "library",
+            "api",
+            "mod.io"
+        ],
+        "author": "fheahdythdr",
+        "license": "MIT",
+        "bugs": {
+            "url": "https://github.com/fheahdythdr/modio.js/issues"
+        },
+        "homepage": "https://github.com/fheahdythdr/modio.js/",
+        "dependencies": {
+            "@types/node": "^18.15.0",
+            "fs": "^0.0.1-security",
+            "https": "^1.0.0",
+            "whatwg-url": "^5.0.0"
+        },
+        "release": {},
+        "type": "module"
+    }
